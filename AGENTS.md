@@ -45,7 +45,11 @@ Comando: `apuracao` (via `uv tool install -e .`; dentro do checkout também func
   "projecao": {
     "aviso": "Estimativa própria…",
     "candidatos": [ { "numero": "13", "nome": "LULA", "pct": 48.4, "min": 48.3, "max": 48.5, "votos": … } ],
-    "swing_nacional_pp": -0.38,           // candidato A (1º na ordem oficial = 13 LULA) vs 1º turno
+    "swing_nacional_pp": -0.38,           // swing estimado do "resto" das UFs (sem as 80 cidades); candidato A = 13 LULA vs 1º turno
+    "swing_regioes_pp": { "Nordeste": …, "Sudeste": …, "Centro-Oeste": …, "Norte": …, "Sul": …, "Exterior": … },
+    "swing_cidades_pp": 2.7,              // swing médio estimado das cidades no país; null sem arquivos de cidade
+    "swing_cidades_ufs_pp": { "sp": …, "rj": … },  // ponto de partida das cidades de cada UF (cidades da UF → região → país)
+    "cidades_usadas": 80,                 // cidades separadas do resto da UF nesta conta (0 = projeção só por UF)
     "validos_projetados": …, "meta_votos": …, "falta_para_meta": { "13": …, "22": … },
     "meta_metodo_2022": …
   },
@@ -106,7 +110,7 @@ Ao interpretar: o placar parcial (`oficial_a`) é enviesado pela ordem de chegad
 
 ## Como a projeção funciona
 
-Por UF: peso do dado atual `w = min(1, apurado/20%)`; fração do restante = `w·atual + (1−w)·(1º turno + swing nacional)`; votos restantes = eleitorado não totalizado × comparecimento × taxa de válidos (atual misturada com 1º turno pelo mesmo `w`). Soma Brasil. Faixa `min/max` = cenário de ±2 p.p. no prior e ±0,5 p.p. no observado; **não é intervalo de confiança**. Antes de qualquer voto, a projeção é só o 1º turno redistribuído.
+Unidades: as 80 maiores cidades (`sources.CIDADES`, ~35% do eleitorado) e o "resto" de cada UF (UF − cidades). Sem arquivo de cidade, ou com cidade e UF fora de sincronia, a UF inteira é uma unidade. Swing = fração do Lula entre os finalistas − a mesma fração no 1º turno **da unidade**; separar capital e interior tira a maior parte do viés de ordem de chegada. O swing observado é encolhido pela confiabilidade `r = apurado / (apurado + 0,05·(1 − apurado))` (metade com 5% apurado): o resto das UFs encolhe para 0 (o 1º turno); cada cidade encolhe para o ponto de partida das cidades da sua UF, que encolhe para o das cidades da região, que encolhe para o do país, que encolhe para 0 (cada nível vale pela parte já apurada das suas cidades, pesada pelo tamanho). Fração do restante = 1º turno + swing encolhido. Votos restantes = eleitorado não totalizado × comparecimento × taxa de válidos (atual misturada com 1º turno por `w = min(1, apurado/20%)`). Faixa `min/max` = ~90% de uma soma de erros de swing nos votos restantes (comum σ 1,5 p.p., regional 1 p.p., por unidade 2,5 p.p.·√(1 − apurado)); σ são premissas, **não é intervalo de confiança calibrado**. `K = 0,05` e o centro 0 foram escolhidos no histórico de 25/10 por UF (prever o swing dos votos que entraram depois); a parte das cidades não tem histórico para validação. O `watch` relê cada cidade no máximo a cada 20 s, só quando a UF avançou; tabela `city_snapshots`.
 
 "Matematicamente definido" usa só números oficiais: vantagem do líder > eleitorado ainda não totalizado.
 
@@ -130,7 +134,7 @@ Diretório de dados, em ordem de prioridade: `APURACAO_DATA` (aceita `~`) → `d
 
 ```
 data/
-  baseline/<abr>.json        1º turno final (imutável)
+  baseline/<abr>.json        1º turno final (imutável) · baseline/mu/<código>.json  1º turno das 80 cidades
   templates/                 moldes reais do 2º turno para a simulação
   tse/apuracao.db            histórico ao vivo   · tse/raw/<abr>/<idg>.json  cada versão do TSE
   sim/ …                     simulação (apagada só com `watch -s sim --reset-sim`)

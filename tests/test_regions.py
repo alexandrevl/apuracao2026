@@ -4,8 +4,8 @@ import pytest
 
 from apuracao.analysis import project
 from apuracao.parse import Counts
-from apuracao.regions import REGIONS, UF_REGION, aggregate_regions, sorted_regions
-from apuracao.sources import UFS
+from apuracao.regions import aggregate_regions, sorted_regions
+from apuracao.sources import REGIONS, UF_REGION, UFS
 from test_core import A, B, baseline, make_result
 
 

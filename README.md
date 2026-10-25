@@ -162,15 +162,15 @@ Para consultar uma simulação, acrescente `-s sim`. `-s t1` permite validar a l
 
 ## Como as estimativas funcionam — e onde podem falhar
 
-1. **Referência por UF:** votos do primeiro turno entre os dois finalistas; os demais são redistribuídos proporcionalmente. Isso é uma hipótese, não uma medição de transferência de votos.
-2. **Swing:** deslocamento em relação à referência estadual, ponderado pelos votos já contabilizados.
-3. **Mistura inicial:** o resultado atual ganha peso até 20% apurado na UF; daí em diante o modelo usa a proporção observada para estimar o restante.
+1. **Unidades:** as 80 maiores cidades (~35% do eleitorado) e o "resto" de cada UF. Cada uma é comparada com o próprio 1º turno; os votos de outros candidatos são redistribuídos proporcionalmente (hipótese, não medição de transferência).
+2. **Swing encolhido:** as primeiras seções de um lugar costumam não representá-lo, então o swing observado vale mais quanto mais se apurou (metade com 5%, inteiro com 100%). O resto de cada UF parte do 1º turno; cada cidade parte do swing das outras cidades do mesmo estado; a região e o país só entram enquanto as cidades do estado têm pouco apurado. Assim Manaus não define São Paulo.
+3. **Por que separar as cidades:** dentro de uma UF, capital e interior apuram em ordens diferentes. Medido só por UF, isso aparece como swing falso (em 25/10, SP com 1% apurado mostrava −5 p.p.; capital e interior separados mostravam ~0).
 4. **Votos que faltam:** eleitorado não totalizado × comparecimento × taxa de votos válidos, misturando referências históricas e atuais.
-5. **Soma nacional:** votos já observados + estimativas restantes por UF. Com o BR finalizado, prevalece o resultado nacional final.
+5. **Soma nacional:** votos já observados + estimativas restantes por unidade. Com o BR finalizado, prevalece o resultado nacional final.
 
-A faixa `min/max` é uma **faixa de cenários**, não intervalo de confiança. A chance usa uma distribuição normal e um piso de incerteza escolhido no código; **não foi calibrada com um histórico de eleições**.
+A faixa `min/max` é ~90% de uma soma de erros de swing (comum ao país, por região e por unidade) cujos tamanhos são **premissas**, não medidos. A chance usa essa faixa com um piso de incerteza; **não foi calibrada com um histórico de eleições**.
 
-O modelo pode errar especialmente quando capital e interior apuram em ordens diferentes, quando o swing varia entre regiões ou quando arquivos chegam defasados. Passar de 20% apurado não torna uma UF uma amostra representativa por si só. Use as estimativas como uma lente para investigar, não como chamada de vencedor.
+O modelo ainda pode errar quando a ordem de chegada dentro de cada cidade ou do interior é enviesada (só seções pareadas resolveriam isso, e elas exigem histórico por seção), quando o swing real é muito desigual ou quando arquivos chegam defasados. O encolhimento foi calibrado com uma única noite (25/10/2026). Use as estimativas como uma lente para investigar, não como chamada de vencedor.
 
 ### Quatro coisas diferentes
 

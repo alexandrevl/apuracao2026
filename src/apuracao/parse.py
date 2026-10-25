@@ -157,7 +157,7 @@ def parse_result(raw: dict) -> Result:
                             seq=to_int(c.get("seq")),
                         )
                     )
-    # Empate em votos (ex.: tudo zerado) segue a ordem oficial do TSE (seq).
+    # Empate em votos (ex.: tudo zerado) segue o seq do TSE (classificação; no zero, ordem da urna).
     candidates.sort(key=lambda c: (-c.votos, c.seq))
     v = raw.get("v", {})
     return Result(

@@ -9,7 +9,7 @@ from apuracao.analysis import pace, project
 from apuracao.baseline import Baseline, BaselineUf
 from apuracao.events import Event, EventDetector
 from apuracao.parse import parse_progress, parse_result
-from apuracao.sources import UFS, Fetched
+from apuracao.sources import UFS, Fetched, SourceError
 from apuracao.store import PacePoint, Store
 from apuracao.tracker import Tracker
 
@@ -76,16 +76,90 @@ def test_projection_at_full_count_equals_official_result_with_no_band():
     assert a.pct_min == pytest.approx(60.0) and a.pct_max == pytest.approx(60.0)
 
 
-def test_projection_uses_first_round_where_nothing_counted_and_swing_where_counted():
-    # Metade das UFs apurada 100% com A 5 p.p. acima do 1º turno; resto sem votos.
-    counted = UFS[:14]
-    ufs = {abr: make_result(abr, 550, 450, 1.0)[1] for abr in counted}
-    _, br = make_result("br", 550 * 14, 450 * 14, 0.5)
-    p = project(br, ufs, None, baseline(0.5))
-    assert p.swing_pp == pytest.approx(5.0)
-    a = next(c for c in p.candidates if c.numero == A)
-    assert 54.0 < a.pct < 55.5  # UFs abertas recebem prior 50% + swing 5 p.p.
+def test_candidate_a_stays_13_when_tse_seq_flips_after_lead_change():
+    # O seq do TSE é a classificação: na virada de 25/10 o 22 passou a seq 1.
+    from apuracao.analysis import finalists, thermometer
+    raw, _ = make_result("br", 490, 510, 0.5)
+    for agr in raw["carg"][0]["agr"]:
+        for par in agr["par"]:
+            for c in par["cand"]:
+                c["seq"] = "1" if c["n"] == B else "2"
+    br = parse_result(raw)
+    assert finalists(br) == (A, B)
+    p = project(br, {}, None, baseline(0.5))
+    assert p.candidates[0].numero == A
+    assert thermometer(br, p, []).numero == A
+
+
+def test_early_swing_is_shrunk_and_converges_to_observed_at_full_count():
+    # Todas as UFs do país com A 10 p.p. acima do 1º turno: o swing estimado cresce com o % apurado.
+    domestic = [abr for abr in UFS if abr != "zz"]
+    swings = []
+    for frac in (0.05, 0.5, 1.0):
+        ufs = {abr: make_result(abr, 600, 400, frac)[1] for abr in domestic}
+        _, br = make_result("br", 600 * 27, 400 * 27, frac)
+        swings.append(project(br, ufs, None, baseline(0.5)).swing_pp)
+    assert 0 < swings[0] < swings[1] < swings[2]
+    assert swings[0] < 6  # com 5% apurado o swing observado vale ~metade
+    assert swings[2] == pytest.approx(10.0)
+
+
+def test_capital_counted_first_does_not_fake_a_statewide_swing():
+    # SP: capital (60% A no 1º turno) e interior (40%) do mesmo tamanho; nenhum voto mudou,
+    # mas só metade da capital foi apurada. Por UF isso parece +10 p.p. de swing; por unidade, não.
+    def base_uf(abr, va, vb, k=1):
+        return BaselineUf(abr, 800_000 * k, 200_000 * k, 760_000 * k, {A: va, B: vb}, {})
+
+    base = baseline(0.5)
+    base.ufs["sp"] = base_uf("sp", 1_000_000, 1_000_000, 2)
+    base.cidades["71072"] = base_uf("71072", 600_000, 400_000)
+    _, city = make_result("71072", 228_000, 152_000, 0.5)
+    raw_uf, _ = make_result("sp", 228_000, 152_000, 0.25, eleitorado=2_000_000)
+    raw_uf["s"].update(ts="2000", st="500")
+    uf = parse_result(raw_uf)
+    _, br = make_result("br", 228_000, 152_000, 0.01)
+
+    by_uf = project(br, {"sp": uf}, None, base)
+    by_unit = project(br, {"sp": uf}, None, base, {"71072": city})
+    assert by_uf.ufs_pct_a["sp"] > 52
+    assert by_unit.cidades_usadas == 1
+    assert by_unit.ufs_pct_a["sp"] == pytest.approx(50.0, abs=0.01)
+    a = next(c for c in by_unit.candidates if c.numero == A)
     assert a.pct_min < a.pct < a.pct_max
+
+
+def test_city_without_data_follows_cities_of_its_own_state_not_other_regions():
+    # Guarulhos (SP) quase toda apurada sem swing; Manaus quase toda apurada com +10 p.p.
+    # A capital paulista, sem votos ainda, deve partir de SP (~0), não de Manaus.
+    base = baseline(0.5)
+    city_base = BaselineUf("c", 800_000, 200_000, 760_000, {A: 500_000, B: 500_000}, {})
+    for cd in ("71072", "64777", "02550"):
+        base.cidades[cd] = city_base
+    for abr in ("sp", "am"):
+        base.ufs[abr] = BaselineUf(abr, 2_400_000, 600_000, 2_280_000, {A: 1_500_000, B: 1_500_000}, {})
+
+    def uf_file(abr, va, vb):
+        raw, _ = make_result(abr, va, vb, 0.34, eleitorado=3_000_000)
+        raw["s"].update(ts="3000", st="1000")
+        return parse_result(raw)
+
+    cities = {"71072": make_result("71072", 0, 0, 0.0)[1], "64777": make_result("64777", 450, 450, 0.9)[1],
+              "02550": make_result("02550", 540, 360, 0.9)[1]}
+    ufs = {"sp": uf_file("sp", 550, 550), "am": uf_file("am", 640, 460)}
+    _, br = make_result("br", 1190, 1010, 0.05)
+    p = project(br, ufs, None, base, cities)
+    assert p.cidades_usadas == 3
+    assert p.swing_cidades_ufs_pp["am"] > 8
+    assert abs(p.swing_cidades_ufs_pp["sp"]) < 1
+
+
+def test_city_files_out_of_sync_with_uf_fall_back_to_whole_uf():
+    base = baseline(0.5)
+    base.cidades["71072"] = BaselineUf("71072", 800_000, 200_000, 760_000, {A: 600_000, B: 400_000}, {})
+    _, uf = make_result("sp", 100, 100, 0.1)
+    _, city = make_result("71072", 5_000, 5_000, 0.5)  # cidade à frente do arquivo da UF
+    _, br = make_result("br", 100, 100, 0.01)
+    assert project(br, {"sp": uf}, None, base, {"71072": city}).cidades_usadas == 0
 
 
 def test_mathematically_defined_only_when_lead_exceeds_remaining_electorate():
@@ -151,6 +225,53 @@ class FakeSource:
             if item["cdabr"] == abr:
                 item["s"]["st"] = raw["s"]["st"]
                 item["dt"], item["ht"], item["and"] = "25/10/2026", f"18:{len(self.log) % 60:02d}:00", "p"
+
+
+class CityFakeSource(FakeSource):
+    """Publica São Paulo capital; ``city_fails`` simula 404/timeout só do arquivo municipal."""
+
+    def __init__(self):
+        super().__init__()
+        self.city = make_result("71072", 30, 20, 0.05, eleitorado=500_000)[0]
+        self.city_fails = True
+
+    def city_result(self, uf, cd):
+        if self.city_fails:
+            self.log.append(f"{cd}!")
+            raise SourceError(f"{cd}: HTTP 404")
+        return self._serve(cd, self.city)
+
+
+def _city_tracker(tmp_path, monkeypatch):
+    clock = [datetime(2026, 10, 25, 19, 0)]
+    monkeypatch.setattr("apuracao.tracker.now_brt", lambda: clock[0])
+    base = baseline(0.5)
+    base.cidades["71072"] = BaselineUf("71072", 400_000, 100_000, 380_000, {A: 300_000, B: 200_000}, {})
+    src = CityFakeSource()
+    src.advance("sp", 60, 40, 0.1)
+    src.results["sp"]["s"]["ts"] = "2000"  # UF maior que a capital
+    src.results["sp"].update(dt="25/10/2026", ht="18:00:00")  # igual ao acompanhamento: UF em dia
+    src.results["br"] = make_result("br", 60, 40, 0.01)[0]
+    return src, Tracker(src, Store(tmp_path), base), clock
+
+
+def test_city_failure_does_not_block_official_update(tmp_path, monkeypatch):
+    src, tracker, _ = _city_tracker(tmp_path, monkeypatch)
+    st = tracker.poll()
+    assert st.error is None and "71072!" in src.log
+    assert st.br.candidate(A).votos == 60 and st.projection is not None
+    assert st.projection.cidades_usadas == 0  # cai para a UF inteira
+
+
+def test_pending_city_is_retried_even_when_progress_is_unchanged(tmp_path, monkeypatch):
+    src, tracker, clock = _city_tracker(tmp_path, monkeypatch)
+    tracker.poll()
+    src.city_fails = False
+    clock[0] += timedelta(seconds=30)
+    src.log.clear()
+    st = tracker.poll()  # EA14 igual (304): a cidade pendente ainda é buscada
+    assert src.log == ["ab", "71072"]
+    assert st.projection.cidades_usadas == 1
 
 
 def test_tracker_downloads_only_what_changed(tmp_path):

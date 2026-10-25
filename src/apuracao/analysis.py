@@ -1,14 +1,19 @@
-"""Projeção por UF ajustada pelo 1º turno, comparação com o 1º turno, ritmo e meta.
+"""Projeção por unidade (maiores cidades + resto de cada UF), comparação com o 1º turno, ritmo e meta.
 
 Projeção (estimativa, não resultado):
-- Prior da UF = fração do candidato entre os dois finalistas no 1º turno da UF,
-  deslocada pelo *swing* nacional observado (média ponderada por votos válidos já apurados).
-- Peso do dado atual ``w = min(1, apurado_uf / 20%)``.
+- Unidades: cada uma das 80 maiores cidades acompanhadas e o "resto" de cada UF (UF − essas
+  cidades). Sem arquivo de cidade, a UF inteira é uma unidade. Separar capital e interior tira a
+  maior parte do viés de ordem de chegada que distorcia o swing medido por UF.
+- Swing = fração do candidato A entre os finalistas agora − a mesma fração no 1º turno da unidade.
+- O swing observado é encolhido pela confiabilidade ``r = apurado / (apurado + K·(1 − apurado))``:
+  resto das UFs → 0 (o 1º turno); cidades → cidades da mesma UF → da região → do país → 0, cada
+  nível valendo pela parte já apurada das suas cidades (pesada pelo tamanho).
+- Fração do restante da unidade = fração do 1º turno + swing encolhido.
 - Votos válidos restantes = eleitorado não totalizado × comparecimento × taxa de válidos
-  (taxas atuais da UF misturadas com as do 1º turno pelo mesmo ``w``).
-- Fração do restante = ``w·atual + (1−w)·prior``.
-- Faixa de sensibilidade: ±(2 p.p.·(1−w) + 0,5 p.p.·w·(1−apurado)) sobre a fração do restante.
-  É uma faixa de cenário, não um intervalo de confiança estatístico.
+  (taxas atuais misturadas com as do 1º turno por ``w = min(1, apurado / 20%)``).
+- Faixa: intervalo de ~90% de uma soma de erros de swing nos votos restantes — comum ao país
+  (σ 1,5 p.p.), por região (1 p.p.) e por unidade (2,5 p.p.·√(1 − apurado)). Os σ são premissas,
+  não medidas; a faixa não é intervalo de confiança calibrado.
 
 "Matematicamente definido" usa apenas números oficiais: vantagem do líder maior que todo o
 eleitorado ainda não totalizado (cada voto restante iria para o segundo colocado).
@@ -17,24 +22,36 @@ eleitorado ainda não totalizado (cada voto restante iria para o segundo colocad
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 
 from .baseline import Baseline, BaselineUf
 from .parse import Counts, Progress, Result
+from .sources import CIDADE_UF, REGIONS, UF_REGION
 from .store import PacePoint
 
-FULL_WEIGHT_AT = 0.20  # fração apurada a partir da qual a UF usa só o dado atual
-BAND_PRIOR = 0.02
-BAND_CURRENT = 0.005
-PROJECTION_NOTICE = "Estimativa própria baseada no 1º turno e no ritmo por UF; não é resultado oficial."
+# Peso prévio no encolhimento do swing: r = apurado / (apurado + K·(1 − apurado)); com 5% apurado
+# o dado observado vale metade. Calibrado em 25/10/2026 (por UF, centro 0): prever, a cada versão, o
+# swing dos votos que entraram depois em cada UF. Centro 0 com K=0,05: RMSE 2,3 p.p., viés −0,1;
+# centro regional/nacional (K=0,10): 2,7 p.p., viés +0,6; modelo original: 4,2 p.p., viés +3,2.
+SWING_SHRINK_K = 0.05
+SIGMA_COMMON = 0.015
+SIGMA_REGION = 0.01
+SIGMA_UNIT = 0.025
+Z90 = 1.645
+TURNOUT_FULL_WEIGHT_AT = 0.20  # comparecimento/taxa de válidos: só o dado atual a partir de 20% apurado
+PROJECTION_NOTICE = ("Estimativa própria (maiores cidades + resto de cada UF vs 1º turno); "
+                     "não é resultado oficial.")
 
 
 def finalists(br: Result) -> tuple[str, str] | None:
-    """Os dois candidatos do 2º turno, na ordem oficial do TSE."""
+    """Os dois candidatos do 2º turno em ordem fixa pelo número (13 antes de 22).
+
+    Não use ``seq``: no arquivo do TSE ele é a classificação por votos e troca na virada
+    (às 19:44:44 de 25/10/2026 o 22 passou a seq 1), o que invertia o candidato A."""
     if len(br.candidates) != 2:
         return None
-    a, b = sorted(br.candidates, key=lambda c: c.seq)
+    a, b = sorted(br.candidates, key=lambda c: int(c.numero))
     return a.numero, b.numero
 
 
@@ -57,7 +74,11 @@ class CandidateProjection:
 @dataclass(frozen=True)
 class Projection:
     candidates: list[CandidateProjection]
-    swing_pp: float  # deslocamento médio do candidato A em relação ao 1º turno (p.p.)
+    swing_pp: float  # swing estimado do resto das UFs, agregado no país (p.p.; candidato A vs 1º turno)
+    swing_regioes_pp: dict[str, float]  # idem, por região
+    swing_cidades_pp: float | None  # swing médio estimado das cidades no país (reserva); None sem cidades
+    swing_cidades_ufs_pp: dict[str, float]  # ponto de partida das cidades de cada UF (UF → região → país)
+    cidades_usadas: int  # quantas cidades entraram separadas do resto da sua UF
     validos_projetados: int
     meta: int  # maioria dos válidos projetados
     falta: dict[str, int]  # votos que cada candidato ainda precisa (pela meta projetada)
@@ -85,7 +106,6 @@ class UfAnalysis:
     swing_pp: float | None  # A atual − A no 1º turno (p.p.); None sem votos
     comparecimento_pct: float | None
     comparecimento_1t_pct: float
-    peso: float
 
 
 @dataclass(frozen=True)
@@ -97,17 +117,115 @@ class Pace:
     eta: datetime | None
 
 
-def national_swing(ufs: dict[str, Result], baseline: Baseline, a: str, b: str) -> float:
-    num = den = 0.0
-    for abr, result in ufs.items():
-        base = baseline.ufs.get(abr)
-        share = _share(result, a, b)
-        if base is None or share is None:
+def reliability(frac: float) -> float:
+    """Peso do swing observado contra a opinião prévia, pela fração apurada (0–1): 0 → 0, 1 → 1."""
+    return frac / (frac + SWING_SHRINK_K * (1 - frac)) if frac > 0 else 0.0
+
+
+def _shrink(observed: float, frac: float, center: float) -> float:
+    r = reliability(frac)
+    return r * observed + (1 - r) * center
+
+
+@dataclass(frozen=True)
+class _Unit:
+    """Uma cidade acompanhada ou o resto de uma UF (ou a UF inteira, sem cidades)."""
+
+    uf: str
+    cidade: bool
+    result: Result | None
+    base: BaselineUf
+    progress_counts: Counts | None = None
+
+    @property
+    def frac(self) -> float:
+        if self.result is None:
+            return 0.0
+        return 1.0 if self.result.andamento == "f" else min(1.0, max(0.0, self.result.counts.pct_secoes / 100))
+
+    def votes(self, a: str, b: str) -> tuple[int, int]:
+        if self.result is None:
+            return 0, 0
+        ca, cb = self.result.candidate(a), self.result.candidate(b)
+        return (ca.votos if ca else 0), (cb.votos if cb else 0)
+
+
+def _minus_counts(x: Counts, y: Counts) -> Counts:
+    secoes_total = x.secoes_total - y.secoes_total
+    secoes_totalizadas = x.secoes_totalizadas - y.secoes_totalizadas
+    return Counts(
+        secoes_total=secoes_total, secoes_totalizadas=secoes_totalizadas,
+        pct_secoes=100 * secoes_totalizadas / secoes_total if secoes_total > 0 else 0.0,
+        eleitorado=x.eleitorado - y.eleitorado,
+        eleitorado_totalizado=x.eleitorado_totalizado - y.eleitorado_totalizado,
+        eleitorado_nao_totalizado=x.eleitorado_nao_totalizado - y.eleitorado_nao_totalizado,
+        comparecimento=x.comparecimento - y.comparecimento, abstencao=x.abstencao - y.abstencao,
+    )
+
+
+def _minus_result(x: Result, cities: list[Result]) -> Result | None:
+    """UF − cidades; None se os arquivos estiverem defasados entre si (algum total negativo)."""
+    counts, valid = x.counts, x.votos_validos
+    votes = {c.numero: c.votos for c in x.candidates}
+    for city in cities:
+        counts, valid = _minus_counts(counts, city.counts), valid - city.votos_validos
+        for c in city.candidates:
+            votes[c.numero] = votes.get(c.numero, 0) - c.votos
+    fields = (counts.secoes_total, counts.secoes_totalizadas, counts.eleitorado, counts.eleitorado_totalizado,
+              counts.eleitorado_nao_totalizado, counts.comparecimento, counts.abstencao, valid, *votes.values())
+    if min(fields) < 0 or counts.secoes_totalizadas > counts.secoes_total:
+        return None
+    candidates = [replace(c, votos=votes[c.numero]) for c in x.candidates]
+    return replace(x, counts=counts, votos_validos=valid, candidates=candidates)
+
+
+def _minus_base(x: BaselineUf, cities: list[BaselineUf]) -> BaselineUf:
+    votes = dict(x.votos)
+    for city in cities:
+        for numero, v in city.votos.items():
+            votes[numero] = votes.get(numero, 0) - v
+    return BaselineUf(
+        abr=x.abr, comparecimento=x.comparecimento - sum(c.comparecimento for c in cities),
+        abstencao=x.abstencao - sum(c.abstencao for c in cities),
+        votos_validos=x.votos_validos - sum(c.votos_validos for c in cities), votos=votes, pct={},
+    )
+
+
+def _units(ufs: dict[str, Result], cities: dict[str, Result], progress: Progress | None,
+           baseline: Baseline) -> list[_Unit]:
+    units: list[_Unit] = []
+    for abr, base in baseline.ufs.items():
+        result = ufs.get(abr)
+        prog = progress.ufs[abr].counts if progress and abr in progress.ufs else None
+        tracked = [cd for cd, uf in CIDADE_UF.items()
+                   if uf == abr and cd in cities and cd in baseline.cidades] if result is not None else []
+        rest = _minus_result(result, [cities[cd] for cd in tracked]) if tracked else None
+        if rest is None:  # sem cidades, ou arquivos de cidade e UF fora de sincronia
+            units.append(_Unit(abr, False, result, base, prog))
             continue
-        weight = result.votos_validos
-        num += (share - base.two_party_share(a, b)) * weight
-        den += weight
-    return num / den if den else 0.0
+        units.extend(_Unit(abr, True, cities[cd], baseline.cidades[cd]) for cd in tracked)
+        units.append(_Unit(abr, False, rest, _minus_base(base, [baseline.cidades[cd] for cd in tracked])))
+    return units
+
+
+def _observed_swing(unit: _Unit, a: str, b: str) -> float | None:
+    va, vb = unit.votes(a, b)
+    return va / (va + vb) - unit.base.two_party_share(a, b) if va + vb else None
+
+
+def _pooled(units: list[_Unit], a: str, b: str, center: float) -> float:
+    """Média dos swings observados pesada pela parte apurada; a parte que falta vota no centro."""
+    counted = weighted = total = 0.0
+    for unit in units:
+        size = unit.base.votos.get(a, 0) + unit.base.votos.get(b, 0)
+        total += size
+        swing = _observed_swing(unit, a, b)
+        if swing is not None:
+            counted += size * unit.frac
+            weighted += size * unit.frac * swing
+    if counted <= 0 or total <= 0:
+        return center
+    return _shrink(weighted / counted, counted / total, center)
 
 
 def _remaining_valid_votes(
@@ -121,7 +239,7 @@ def _remaining_valid_votes(
     if result.andamento == "f":
         return 0.0
     counts = result.counts
-    w = min(1.0, counts.pct_secoes / 100 / FULL_WEIGHT_AT)
+    w = min(1.0, counts.pct_secoes / 100 / TURNOUT_FULL_WEIGHT_AT)
     if not counts.comparecimento and not counts.abstencao:
         turnout, valid = base.turnout, base.valid_rate
     else:
@@ -132,46 +250,50 @@ def _remaining_valid_votes(
 
 
 def project(
-    br: Result, ufs: dict[str, Result], progress: Progress | None, baseline: Baseline
+    br: Result, ufs: dict[str, Result], progress: Progress | None, baseline: Baseline,
+    cities: dict[str, Result] | None = None,
 ) -> Projection | None:
     pair = finalists(br)
     if pair is None:
         return None
     a, b = pair
-    swing = national_swing(ufs, baseline, a, b)
+    units = _units(ufs, cities or {}, progress, baseline)
+    city_units = [u for u in units if u.cidade]
+    # Centro das cidades em cascata: nacional (centro 0) → região (centro nacional) → UF (centro
+    # regional). Cada nível vale pela parte já apurada das suas cidades, pesada pelo tamanho; assim a
+    # capital paulista segue primeiro as cidades de SP, e Manaus/Belém só entram enquanto SP tem pouco.
+    city_country = _pooled(city_units, a, b, 0.0) if city_units else 0.0
+    city_region = {name: _pooled([u for u in city_units if u.uf in members], a, b, city_country)
+                   for name, members in REGIONS.items()}
+    city_uf = {uf: _pooled([u for u in city_units if u.uf == uf], a, b, city_region[UF_REGION[uf]])
+               for uf in {u.uf for u in city_units}}
 
     proj = {a: 0.0, b: 0.0}
-    low_a = high_a = 0.0
-    ufs_pct_a: dict[str, float] = {}
-    for abr, base in baseline.ufs.items():
-        result = ufs.get(abr)
-        if result is not None:
-            counts = result.counts
-            va = (result.candidate(a).votos if result.candidate(a) else 0)
-            vb = (result.candidate(b).votos if result.candidate(b) else 0)
-            frac = counts.pct_secoes / 100
-        else:
-            # Sem arquivo da UF ainda: nada apurado, todo o eleitorado é restante.
-            va = vb = 0
-            frac = 0.0
-
-        w = min(1.0, frac / FULL_WEIGHT_AT)
-        rem_valid = _remaining_valid_votes(
-            base, result, progress.ufs[abr].counts if progress and abr in progress.ufs else None
-        )
-
-        prior = min(0.99, max(0.01, base.two_party_share(a, b) + swing))
-        current = va / (va + vb) if va + vb else prior
-        share = w * current + (1 - w) * prior
-        band = BAND_PRIOR * (1 - w) + BAND_CURRENT * w * (1 - frac)
+    var_common = 0.0  # Σ votos restantes (erro comum)
+    var_region: dict[str, float] = {}
+    var_unit = 0.0
+    uf_votes: dict[str, list[float]] = {}
+    for unit in units:
+        va, vb = unit.votes(a, b)
+        rem_valid = _remaining_valid_votes(unit.base, unit.result, unit.progress_counts)
+        observed = _observed_swing(unit, a, b)
+        center = city_uf[unit.uf] if unit.cidade else 0.0
+        swing = center if observed is None else _shrink(observed, unit.frac, center)
+        share = min(0.99, max(0.01, unit.base.two_party_share(a, b) + swing))
 
         proj[a] += va + rem_valid * share
         proj[b] += vb + rem_valid * (1 - share)
-        low_a += va + rem_valid * max(0.0, share - band)
-        high_a += va + rem_valid * min(1.0, share + band)
-        uf_a, uf_b = va + rem_valid * share, vb + rem_valid * (1 - share)
-        if uf_a + uf_b > 0:
-            ufs_pct_a[abr] = 100 * uf_a / (uf_a + uf_b)
+        var_common += rem_valid
+        region = UF_REGION[unit.uf]
+        var_region[region] = var_region.get(region, 0.0) + rem_valid
+        var_unit += (rem_valid * SIGMA_UNIT) ** 2 * (1 - unit.frac)
+        acc = uf_votes.setdefault(unit.uf, [0.0, 0.0])
+        acc[0] += va + rem_valid * share
+        acc[1] += vb + rem_valid * (1 - share)
+    ufs_pct_a = {abr: 100 * va / (va + vb) for abr, (va, vb) in uf_votes.items() if va + vb > 0}
+    sigma_votes = math.sqrt((var_common * SIGMA_COMMON) ** 2
+                            + sum((v * SIGMA_REGION) ** 2 for v in var_region.values()) + var_unit)
+    low_a, high_a = proj[a] - Z90 * sigma_votes, proj[a] + Z90 * sigma_votes
 
     # O encerramento nacional prevalece sobre arquivos estaduais ainda defasados.
     if br.andamento == "f":
@@ -201,7 +323,12 @@ def project(
     definido = vantagem > restante and br.votos_validos > 0
     return Projection(
         candidates=candidates,
-        swing_pp=100 * swing,
+        swing_pp=100 * _pooled([u for u in units if not u.cidade and u.uf != "zz"], a, b, 0.0),
+        swing_regioes_pp={name: 100 * _pooled([u for u in units if not u.cidade and u.uf in members], a, b, 0.0)
+                          for name, members in REGIONS.items()},
+        swing_cidades_pp=100 * city_country if city_units else None,
+        swing_cidades_ufs_pp={uf: 100 * s for uf, s in sorted(city_uf.items())},
+        cidades_usadas=len(city_units),
         validos_projetados=round(total),
         meta=meta,
         falta={n: max(0, meta - v) for n, v in counted.items()},
@@ -249,7 +376,6 @@ def analyze_ufs(
                 swing_pp=None if share is None else 100 * (share - share_1t),
                 comparecimento_pct=comp,
                 comparecimento_1t_pct=100 * base.turnout,
-                peso=min(1.0, pct_secoes / 100 / FULL_WEIGHT_AT),
             )
         )
     return out
@@ -259,6 +385,8 @@ CHANCE_NOTICE = ("Chance estimada: palpite a partir da projeção (curva normal;
                  "no mínimo 2,5 p.p. × fração de votos que falta). Não é probabilidade calibrada.")
 UNCERTAINTY_FLOOR_PP = 2.5
 RECENT_WINDOW_MIN = 10.0
+# Fração mínima de seções apuradas para extrapolar o ritmo em ETA (o início é lento e acelera).
+PACE_ETA_MIN_FRAC = 0.10
 # Abaixo disso a amostra é pequena e enviesada pela ordem de chegada (exterior, UFs pequenas):
 # a normal centrada na projeção daria "100%" sem base. Não vale para definição oficial.
 MIN_PCT_SECOES_CHANCE = 5.0
@@ -302,7 +430,7 @@ def chance_label(chance: float) -> str:
 
 @dataclass(frozen=True)
 class Thermometer:
-    """Situação do candidato A (1º na ordem oficial, 13 LULA) em relação aos votos que faltam."""
+    """Situação do candidato A (menor número, 13 LULA) em relação aos votos que faltam."""
 
     numero: str
     nome: str
@@ -396,7 +524,9 @@ def pace(points: list[PacePoint], secoes_total: int, window_min: float = 10.0) -
     if rate < 0:
         return None  # Retotalização não é ritmo negativo de entrada de seções.
     restantes = max(0, secoes_total - last.secoes_totalizadas)
-    eta_min = 0.0 if restantes == 0 else (restantes / rate if rate > 0 else None)
+    # No início o ritmo é baixo e acelera muito; extrapolar daí dá ETA de dias. Só estima com amostra madura.
+    maduro = secoes_total > 0 and last.secoes_totalizadas / secoes_total >= PACE_ETA_MIN_FRAC
+    eta_min = 0.0 if restantes == 0 else (restantes / rate if rate > 0 and maduro else None)
     return Pace(
         secoes_por_min=rate,
         janela_min=minutes,

@@ -16,7 +16,7 @@ from .events import Event, EventDetector, notify
 from .parse import Progress, Result, parse_progress, parse_result
 from .polls import PollBook, PollComparison, compare
 from .regions import aggregate_regions
-from .sources import UFS, Source, SourceBlocked, SourceError
+from .sources import CIDADES, UFS, Source, SourceBlocked, SourceError
 from .store import Store
 
 # O TSE publica em horário de Brasília (UTC-3 fixo desde que o Brasil aboliu o horário de verão).
@@ -38,6 +38,7 @@ class State:
     br: Result | None = None
     progress: Progress | None = None
     ufs: dict[str, Result] = field(default_factory=dict)
+    cidades: dict[str, Result] = field(default_factory=dict)  # código TSE do município → resultado
     projection: Projection | None = None
     uf_analysis: list[UfAnalysis] = field(default_factory=list)
     pace: Pace | None = None
@@ -56,6 +57,7 @@ class State:
 
 
 BLOCKED_WAIT_S = 660  # bloqueio do TSE dura 10 min e reinicia se houver nova tentativa
+CITY_MIN_INTERVAL_S = 20.0  # cada cidade é relida no máximo a cada 20 s, e só quando a UF avançou
 MAX_ERROR_WAIT_S = 30
 
 
@@ -80,6 +82,8 @@ class Tracker:
         self._signatures: dict[str, tuple] = {}
         self._dirty = False
         self.polls = polls
+        self._city_checked: dict[str, datetime] = {}
+        self._city_pending: set[str] = set()
 
     def poll(self, ufs: str | list[str] = "changed") -> State:
         """Uma rodada. ``ufs``: "changed" (só UFs que avançaram), "all", ou lista explícita."""
@@ -129,6 +133,48 @@ class Tracker:
         self.state.requests += 1
         return self.source.progress() if kind == "progress" else self.source.result(abr)
 
+    def _poll_cities(self, now: datetime, changed_ufs: list[str]) -> bool:
+        """Maiores cidades das UFs que avançaram (só fontes que publicam municípios).
+
+        Uma cidade fica pendente quando sua UF avança e é relida assim que o intervalo mínimo passar.
+        Falha comum de uma cidade (404, timeout, arquivo inconsistente) não interrompe a rodada: a
+        cidade continua pendente e a projeção usa a última versão dela ou a UF inteira. Bloqueio do
+        TSE (SourceBlocked) continua parando tudo."""
+        fetch = getattr(self.source, "city_result", None)
+        if fetch is None or self.baseline is None or not self.baseline.cidades:
+            return False
+        self._city_pending |= {cd for uf, cd, _ in CIDADES if uf in changed_ufs and cd in self.baseline.cidades}
+        changed = False
+        for uf, cd, _ in CIDADES:
+            last = self._city_checked.get(cd)
+            if cd not in self._city_pending or (
+                last is not None and (now - last).total_seconds() < CITY_MIN_INTERVAL_S
+            ):
+                continue
+            self._city_checked[cd] = now
+            self.state.requests += 1
+            try:
+                res = fetch(uf, cd)
+                result = parse_result(res.raw) if res.changed else None
+                if result is not None and (result.abr != cd or result.eleicao != self.source.eleicao):
+                    raise SourceError(f"Resultado de {result.abr} recebido para o município {cd}")
+            except SourceBlocked:
+                raise
+            except (SourceError, KeyError, TypeError, ValueError):
+                continue  # fica pendente; nova tentativa após o intervalo mínimo
+            self._city_pending.discard(cd)
+            if result is None:
+                continue
+            previous = self.state.cidades.get(cd)
+            if previous is not None and previous.totalizado_em is not None and (
+                result.totalizado_em is None or result.totalizado_em < previous.totalizado_em
+            ):
+                continue
+            self.store.save_city_result(uf, result, res.raw, now)
+            self.state.cidades[cd] = result
+            changed = True
+        return changed
+
     def _poll(self, now: datetime, ufs: str | list[str]) -> bool:
         st = self.state
         fetched = self._fetch("progress")
@@ -149,7 +195,7 @@ class Tracker:
         br_pending = st.br is None or (
             st.progress.br is not None and self._signatures.get("br") != st.progress.br.signature
         )
-        if not fetched.changed and not targets and not br_pending and not self._dirty:
+        if not fetched.changed and not targets and not br_pending and not self._dirty and not self._city_pending:
             return False
 
         changed = self._dirty
@@ -182,11 +228,13 @@ class Tracker:
                 self._signatures[abr] = p.signature
             changed = self._dirty = True
 
+        if self._poll_cities(now, targets):
+            changed = self._dirty = True
         if not changed or st.br is None:
             return False
         st.last_change = now
         if self.baseline is not None:
-            st.projection = project(st.br, st.ufs, st.progress, self.baseline)
+            st.projection = project(st.br, st.ufs, st.progress, self.baseline, st.cidades)
             st.uf_analysis = analyze_ufs(st.br, st.ufs, st.progress, self.baseline)
         st.pace = pace(self.store.pace_points(), st.br.counts.secoes_total)
         if st.projection and st.br.votos_validos:
@@ -210,9 +258,10 @@ class Tracker:
         latest = self.store.latest_results()
         st.br = latest.pop("br", None)
         st.ufs = latest
+        st.cidades = self.store.latest_city_results()
         if st.br is not None:
             if self.baseline is not None:
-                st.projection = project(st.br, st.ufs, None, self.baseline)
+                st.projection = project(st.br, st.ufs, None, self.baseline, st.cidades)
                 st.uf_analysis = analyze_ufs(st.br, st.ufs, None, self.baseline)
             st.pace = pace(self.store.pace_points(), st.br.counts.secoes_total)
             self._refresh_timeline()

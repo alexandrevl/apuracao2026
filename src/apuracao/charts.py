@@ -15,7 +15,7 @@ from rich.text import Text
 from .analysis import MIN_PCT_SECOES_CHANCE, _remaining_shares, chance_above_half, finalists
 from .tracker import State
 
-PLT_COLORS = ("red", "blue")  # mesma ordem das cores do painel (1º e 2º na ordem oficial)
+PLT_COLORS = ("red", "blue")  # mesma ordem das cores do painel (candidatos A e B)
 RICH_COLORS = ("bright_red", "dodger_blue1")
 
 

@@ -7,16 +7,8 @@ estimativas restantes reutilizam o cálculo da projeção; não definem vencedor
 from .analysis import _remaining_valid_votes, finalists
 from .baseline import Baseline
 from .parse import Progress, Result
+from .sources import REGIONS
 
-REGIONS = {
-    "Nordeste": ("al", "ba", "ce", "ma", "pb", "pe", "pi", "rn", "se"),
-    "Sudeste": ("es", "mg", "rj", "sp"),
-    "Centro-Oeste": ("df", "go", "ms", "mt"),
-    "Norte": ("ac", "am", "ap", "pa", "ro", "rr", "to"),
-    "Sul": ("pr", "rs", "sc"),
-    "Exterior": ("zz",),
-}
-UF_REGION = {uf: region for region, ufs in REGIONS.items() for uf in ufs}
 REGION_ORDER = {region: index for index, region in enumerate(REGIONS)}
 REGION_SORTS = ("regiao", "restantes", "eleitorado", "apurado", "saldo")
 

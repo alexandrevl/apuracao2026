@@ -10,11 +10,13 @@ from rich.table import Table
 from rich.text import Text
 
 from .analysis import CHANCE_NOTICE, MIN_PCT_SECOES_CHANCE, PROJECTION_NOTICE, finalists
-from .regions import REGION_ORDER, UF_REGION, sorted_regions
+from .regions import REGION_ORDER, sorted_regions
+from .sources import UF_REGION
 from .tracker import State
 
-COLORS = ("bright_red", "dodger_blue1")  # 1º e 2º na ordem oficial (seq): 13 LULA, 22 FLAVIO
+COLORS = ("bright_red", "dodger_blue1")  # candidatos A e B (ordem pelo número): 13 LULA, 22 FLAVIO
 ANDAMENTO = {"n": "não iniciada", "p": "parcial", "f": "finalizada"}
+REGION_ABBR = {"Nordeste": "NE", "Sudeste": "SE", "Centro-Oeste": "CO", "Norte": "N", "Sul": "S", "Exterior": "Ext"}
 
 
 def n(value: int | float) -> str:
@@ -34,9 +36,26 @@ def _colors(state: State) -> dict[str, str]:
     return dict(zip(pair, COLORS, strict=True)) if pair else {}
 
 
+BAR_MIN, BAR_MAX = 45.0, 55.0  # janela da barra: só há dois finalistas, 0–100 achataria a diferença
+_EIGHTHS = " ▏▎▍▌▋▊▉"
+
+
 def _bar(value: float, width: int, color: str) -> Text:
-    filled = max(0, min(width, round(width * value / 100)))
-    return Text("█" * filled, style=color) + Text("░" * (width - filled), style="grey35")
+    """Barra na janela BAR_MIN–BAR_MAX (resolução de 1/8 de célula), com marca em 50%."""
+    eighths = max(0, min(width * 8, round(width * 8 * (value - BAR_MIN) / (BAR_MAX - BAR_MIN))))
+    full, part = divmod(eighths, 8)
+    mid = round(width * (50 - BAR_MIN) / (BAR_MAX - BAR_MIN))
+    out = Text()
+    for i in range(width):
+        if i == mid:
+            out.append("┃", style="bold white")
+        elif i < full:
+            out.append("█", style=color)
+        elif i == full and part:
+            out.append(_EIGHTHS[part], style=color)
+        else:
+            out.append("░", style="grey35")
+    return out
 
 
 def header(state: State) -> Text:
@@ -186,10 +205,23 @@ def projection_panel(state: State) -> Panel:
         line = Text()
         line.append(f"{c.nome:<22}", style=f"bold {color}")
         line.append(f"{pct(c.pct, 1):>7}", style=f"bold {color}")
-        line.append(f"  faixa {pct(c.pct_min, 1)} – {pct(c.pct_max, 1)}", style="grey70")
+        line.append(f"  faixa ~90% {pct(c.pct_min, 1)} – {pct(c.pct_max, 1)}", style="grey70")
         rows.append(line)
-    swing = f"{p.swing_pp:+.2f}".replace(".", ",")
-    rows.append(Text(f"Swing vs 1º turno ({p.candidates[0].nome}): {swing} p.p."))
+
+    def pp(value: float) -> str:
+        return f"{value:+.1f}".replace(".", ",")
+
+    nome_a = p.candidates[0].nome
+    if p.swing_cidades_pp is not None:
+        rows.append(Text(f"Swing ({nome_a}) vs 1º turno: {p.cidades_usadas} maiores cidades {pp(p.swing_cidades_pp)} · "
+                         f"resto das UFs {pp(p.swing_pp)} p.p."))
+        grandes = [uf for uf in ("sp", "rj", "mg", "ba", "rs", "pr") if uf in p.swing_cidades_ufs_pp]
+        rows.append(Text("  cidades por UF: " + " · ".join(
+            f"{uf.upper()} {pp(p.swing_cidades_ufs_pp[uf])}" for uf in grandes), style="grey70"))
+    else:
+        rows.append(Text(f"Swing ({nome_a}) vs 1º turno: {pp(p.swing_pp)} p.p. (sem dados de cidades)"))
+    regioes = " · ".join(f"{REGION_ABBR[name]} {pp(s)}" for name, s in p.swing_regioes_pp.items())
+    rows.append(Text(f"  resto por região: {regioes}", style="grey70"))
     rows.append(Text(f"Válidos projetados: {n(p.validos_projetados)}"))
     if p.definido:
         nome = next(c.nome for c in br.candidates if c.numero == p.vencedor)
@@ -200,7 +232,8 @@ def projection_panel(state: State) -> Panel:
                          style="grey70"))
     pace = state.pace
     if pace:
-        eta = f"ETA 100%: {hm(pace.eta)} ({pace.eta_min:.0f} min)" if pace.eta_min is not None else "ETA: —"
+        eta = (f"ETA 100%: {hm(pace.eta)} ({pace.eta_min:.0f} min)" if pace.eta_min is not None
+               else "ETA: — (ritmo ainda instável, <10% apurado)")
         rows.append(Text(f"Ritmo: {pace.secoes_por_min:,.0f} seções/min (janela {pace.janela_min:.0f} min) · "
                          f"{n(pace.restantes)} restantes · {eta}".replace(",", ".")))
     return Panel(Group(*rows), title="Projeção · ritmo", border_style="yellow")
@@ -471,6 +504,10 @@ def to_json(state: State, uf: str | None = None) -> dict:
         "candidatos": [{"numero": c.numero, "nome": c.nome, "pct": round(c.pct, 3), "min": round(c.pct_min, 3),
                         "max": round(c.pct_max, 3), "votos": c.votos} for c in p.candidates],
         "swing_nacional_pp": round(p.swing_pp, 3),
+        "swing_regioes_pp": {name: round(s, 3) for name, s in p.swing_regioes_pp.items()},
+        "swing_cidades_pp": None if p.swing_cidades_pp is None else round(p.swing_cidades_pp, 3),
+        "swing_cidades_ufs_pp": {uf: round(s, 3) for uf, s in p.swing_cidades_ufs_pp.items()},
+        "cidades_usadas": p.cidades_usadas,
         "validos_projetados": p.validos_projetados,
         "meta_votos": p.meta,
         "falta_para_meta": p.falta,
@@ -515,7 +552,7 @@ def polls_json(state: State, abr: str | None = None) -> dict:
     return {
         "erro": state.polls_error,
         "lista": state.polls_origem,
-        "nota": "diferenca_pp = pesquisa − referência (% válidos do 1º candidato na ordem oficial, 13 LULA). "
+        "nota": "diferenca_pp = pesquisa − referência (% válidos do candidato A, 13 LULA). "
                 "Referência = projeção até a abrangência finalizar; depois, resultado final oficial.",
         "comparacoes": [
             {"instituto": c.poll.instituto, "abr": c.poll.abr, "divulgacao": c.poll.divulgacao,

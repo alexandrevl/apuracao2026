@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from .parse import Result, parse_result
-from .sources import UFS
+from .sources import CIDADE_UF, UFS
 
 if TYPE_CHECKING:
     from .analysis import Projection
@@ -90,6 +90,20 @@ create table if not exists baseline_t1 (
     votos integer,
     pct real,
     primary key (abr, numero)
+);
+create table if not exists city_snapshots (
+    id integer primary key,
+    captured_at text not null,
+    cd text not null,                   -- código TSE do município
+    uf text not null,
+    idg text not null,
+    totalizado_em text,
+    pct_secoes real,
+    votos_validos integer,
+    votos_a integer,                    -- 13
+    votos_b integer,                    -- 22
+    raw_path text,
+    unique (cd, idg)
 );
 create index if not exists idx_snapshots_abr on snapshots(abr, totalizado_em);
 create view if not exists v_votos as
@@ -184,6 +198,27 @@ class Store:
             write_json_atomic(raw_path, raw)
         return True
 
+    def save_city_result(self, uf: str, result: Result, raw: dict, captured_at: datetime) -> bool:
+        """Município da lista ``CIDADES``: tabela própria, fora de ``snapshots`` (que é BR/UF)."""
+        if CIDADE_UF.get(result.abr) != uf or not result.idg or any(
+            char in result.idg for char in ("/", "\\", "\x00")
+        ) or result.idg in (".", ".."):
+            raise ValueError("Município ou identificador de resultado inválido")
+        raw_path = self.raw_dir / "mu" / result.abr / f"{result.idg}.json"
+        votes = {c.numero: c.votos for c in result.candidates}
+        with self._lock, self._db:
+            cur = self._db.execute(
+                """insert or ignore into city_snapshots (captured_at, cd, uf, idg, totalizado_em, pct_secoes,
+                   votos_validos, votos_a, votos_b, raw_path) values (?,?,?,?,?,?,?,?,?,?)""",
+                (_iso(captured_at), result.abr, uf, result.idg, _iso(result.totalizado_em),
+                 result.counts.pct_secoes, result.votos_validos, votes.get("13"), votes.get("22"),
+                 str(raw_path.relative_to(self.root))),
+            )
+            if cur.rowcount == 0:
+                return False
+            write_json_atomic(raw_path, raw)
+        return True
+
     def save_projection(self, projection: Projection, br: Result, captured_at: datetime) -> None:
         with self._lock, self._db:
             self._db.executemany(
@@ -265,6 +300,18 @@ class Store:
             ).fetchall()
         return {
             row["abr"]: parse_result(json.loads((self.root / row["raw_path"]).read_text(encoding="utf-8")))
+            for row in rows
+        }
+
+    def latest_city_results(self) -> dict[str, Result]:
+        """Última versão gravada de cada município acompanhado (código TSE → resultado)."""
+        with self._lock:
+            rows = self._db.execute(
+                """select cd, raw_path from city_snapshots s
+                   where id = (select max(id) from city_snapshots where cd = s.cd)"""
+            ).fetchall()
+        return {
+            row["cd"]: parse_result(json.loads((self.root / row["raw_path"]).read_text(encoding="utf-8")))
             for row in rows
         }
 

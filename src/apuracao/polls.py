@@ -3,7 +3,7 @@
 Lista do projeto (``pesquisas.json`` dentro do pacote, conferida e com fontes) ou, se existir,
 a lista pessoal ``pesquisas.json`` do diretório de dados, que a substitui por inteiro. O arquivo
 ativo é relido quando muda. Para cada pesquisa compara-se o % de votos válidos do candidato A
-(1º na ordem oficial) com:
+(13 LULA, o de menor número) com:
 
 - a projeção da abrangência (Brasil ou UF) — referência enquanto a apuração não terminou;
 - o placar oficial parcial — mostrado, mas enganoso no começo (ordem de chegada das UFs);
