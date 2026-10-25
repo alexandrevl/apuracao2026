@@ -1,5 +1,7 @@
 # Apuração 2026
 
+[![testes](https://github.com/alexandrevl/apuracao2026/actions/workflows/tests.yml/badge.svg)](https://github.com/alexandrevl/apuracao2026/actions/workflows/tests.yml)
+
 **A noite da eleição, direto do TSE para o terminal.** Placar, histórico, gráficos, UFs, regiões e estimativas próprias — sem precisar alternar entre transmissões e sites para entender o que está acontecendo.
 
 ![Painel da apuração no terminal](docs/images/painel.png)
@@ -231,9 +233,13 @@ O TSE informa limite de 100 requisições por segundo por IP, com possibilidade 
 
 ```bash
 uv sync --locked
+git config core.hooksPath .githooks   # uma vez: roda lint e testes antes de cada git push
+uv run ruff check .
 uv run pytest
 uv build
 ```
+
+O hook `.githooks/pre-push` cancela o push se o lint ([ruff](https://docs.astral.sh/ruff/), só regras de erro real) ou algum teste falhar (em emergência, `git push --no-verify`). No GitHub, o workflow [testes](.github/workflows/tests.yml) roda lint, testes e build em Linux e macOS, com Python 3.12 e 3.15, a cada push na `main` e em cada pull request. Mudanças por versão: [CHANGELOG.md](CHANGELOG.md).
 
 Código em `src/apuracao/`: fontes → parse → armazenamento → análises/eventos → tracker → renderização/CLI. Há regressões de cálculos, histórico, polling, instalação e redesenho da interface. As fixtures de testes vêm dos arquivos públicos do TSE; o simulador produz resultados fictícios.
 

@@ -41,7 +41,10 @@ def make_result(abr: str, va: int, vb: int, frac: float, eleitorado: int = 1_000
 
 def baseline(share_a: float = 0.5) -> Baseline:
     votes = {A: round(1_000_000 * share_a), B: round(1_000_000 * (1 - share_a))}
-    uf = lambda abr: BaselineUf(abr, 800_000, 200_000, 760_000, votes, {})
+
+    def uf(abr: str) -> BaselineUf:
+        return BaselineUf(abr, 800_000, 200_000, 760_000, votes, {})
+
     return Baseline(br=uf("br"), ufs={abr: uf(abr) for abr in UFS}, nomes={A: "LULA", B: "FLAVIO"})
 
 

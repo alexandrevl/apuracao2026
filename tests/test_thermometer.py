@@ -7,7 +7,7 @@ from apuracao.analysis import analyze_ufs, pace, project, recent_share, thermome
 from apuracao.charts import projection_series
 from apuracao.store import PacePoint, Store
 from apuracao.tracker import State
-from test_core import A, B, baseline, make_result
+from test_core import A, baseline, make_result
 
 
 def scenario(frac=0.9, total=1100, projected_a=630):

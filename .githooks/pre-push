@@ -1,0 +1,22 @@
+#!/bin/sh
+# Roda lint (ruff) e testes antes de cada push. Ativar uma vez no clone:
+#   git config core.hooksPath .githooks
+# Pular em emergência: git push --no-verify
+set -e
+
+if ! command -v uv >/dev/null 2>&1; then
+    echo "pre-push: 'uv' não encontrado no PATH; instale uv ou use git push --no-verify." >&2
+    exit 1
+fi
+
+echo "pre-push: ruff check..."
+if ! uv run --locked ruff check --quiet .; then
+    echo "pre-push: ruff encontrou problemas; push cancelado (uv run ruff check . para ver)." >&2
+    exit 1
+fi
+
+echo "pre-push: rodando testes (uv run --locked pytest -q)..."
+if ! uv run --locked pytest -q; then
+    echo "pre-push: testes falharam; push cancelado. Corrija ou use git push --no-verify." >&2
+    exit 1
+fi

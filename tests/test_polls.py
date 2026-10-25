@@ -77,7 +77,7 @@ def test_project_poll_list_is_valid_national_and_sourced():
     assert polls and len(polls) == len(raw["pesquisas"])
     institutes = [p.instituto for p in polls]
     assert len(institutes) == len(set(institutes))  # uma rodada (a mais recente) por instituto
-    for p, item in zip(polls, raw["pesquisas"]):
+    for p, item in zip(polls, raw["pesquisas"], strict=True):
         assert p.abr == "br" and p.fonte and p.fonte.startswith("https://")
         assert item.get("campo_fim") and p.margem_pp is not None
         assert abs(sum(p.validos.values()) - 100) <= 0.2

@@ -1,0 +1,32 @@
+name: testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    name: pytest (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.12", "3.15"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Instalar dependências (lock)
+        run: uv sync --locked
+      - name: Lint (ruff)
+        run: uv run --locked ruff check .
+      - name: Testes
+        run: uv run --locked pytest -q
+      - name: Build do pacote
+        run: uv build

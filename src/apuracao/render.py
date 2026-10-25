@@ -31,7 +31,7 @@ def hm(value: datetime | None) -> str:
 
 def _colors(state: State) -> dict[str, str]:
     pair = finalists(state.br) if state.br else None
-    return dict(zip(pair, COLORS)) if pair else {}
+    return dict(zip(pair, COLORS, strict=True)) if pair else {}
 
 
 def _bar(value: float, width: int, color: str) -> Text:

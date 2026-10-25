@@ -111,7 +111,7 @@ def draw_timeline(plt, state: State) -> None:
     names = _names(state)
     ox = [r["pct_secoes"] for r in state.timeline_official]
     values: list[float] = []
-    for numero, color in zip(pair, PLT_COLORS):
+    for numero, color in zip(pair, PLT_COLORS, strict=True):
         oy = [r["pct"].get(numero, 0.0) for r in state.timeline_official]
         values += oy
         plt.plot(ox, oy, color=color, marker="braille", label=names[numero])
@@ -147,7 +147,7 @@ def draw_need(plt, state: State) -> None:
     need = [max(0.0, min(100.0, v)) for v in s["need"]]  # fora de 0–100 só no cenário estimado
     boundaries = [0, *s["need_breaks"], len(s["x_need"])]
     first = True
-    for start, end in zip(boundaries, boundaries[1:]):
+    for start, end in zip(boundaries, boundaries[1:], strict=False):  # pares consecutivos
         if start == end:
             continue
         # "precisa" por último: se as curvas coincidirem, ela fica visível por cima.
