@@ -1,0 +1,9 @@
+[
+  {
+    "instituto": "Exemplo fictício — não é uma pesquisa real",
+    "abr": "br",
+    "validos": {"13": 50.0, "22": 50.0},
+    "margem_pp": 2.0,
+    "obs": "Apenas demonstra o formato. Substitua por uma pesquisa verificada e acrescente data de campo, registro TSE e URL da fonte antes de usar."
+  }
+]
