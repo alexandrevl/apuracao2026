@@ -8,16 +8,25 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from .analysis import Pace, Projection, Thermometer, UfAnalysis, analyze_ufs, pace, project, thermometer
 from .baseline import Baseline
 from .events import Event, EventDetector, notify
 from .parse import Progress, Result, parse_progress, parse_result
 from .polls import PollBook, PollComparison, compare
+from .regions import aggregate_regions
 from .sources import UFS, Source, SourceBlocked, SourceError
 from .store import Store
-from .regions import aggregate_regions
+
+# O TSE publica em horário de Brasília (UTC-3 fixo desde que o Brasil aboliu o horário de verão).
+# Todo carimbo gerado aqui usa esse relógio, para ser comparável a totalizado_em/gerado_em
+# independentemente de onde o `watch` roda.
+BRT = timezone(timedelta(hours=-3), "BRT")
+
+
+def now_brt() -> datetime:
+    return datetime.now(BRT).replace(tzinfo=None)
 
 
 @dataclass
@@ -75,7 +84,7 @@ class Tracker:
     def poll(self, ufs: str | list[str] = "changed") -> State:
         """Uma rodada. ``ufs``: "changed" (só UFs que avançaram), "all", ou lista explícita."""
         st = self.state
-        now = datetime.now()
+        now = now_brt()
         st.last_check = now
         st.new_events = []
         st.requests = 0
@@ -87,7 +96,7 @@ class Tracker:
         except SourceError as exc:
             st.error, changed = str(exc), False
 
-        if not changed and (stale := self.detector.check_stale(st.br, now)):
+        if not changed and (stale := self.detector.check_stale(st.br, now)) and not self._already_warned(stale):
             st.new_events = [stale]
             self.store.save_events(st.new_events)
         if st.new_events:
@@ -97,6 +106,12 @@ class Tracker:
                     notify(event)
         self._compare_polls()
         return st
+
+    def _already_warned(self, stale: Event) -> bool:
+        """Reabrir o ``watch`` não repete o aviso para o mesmo dado parado do TSE."""
+        last = stale.payload.get("ultimo_totalizado_em")
+        return any(e["type"] == "sem_atualizacao" and e["payload"].get("ultimo_totalizado_em") == last
+                   for e in self.store.events())
 
     def _compare_polls(self) -> None:
         """Barato e sem rede: roda toda rodada para pegar edições da lista de pesquisas."""

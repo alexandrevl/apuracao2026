@@ -259,6 +259,9 @@ CHANCE_NOTICE = ("Chance estimada: palpite a partir da projeção (curva normal;
                  "no mínimo 2,5 p.p. × fração de votos que falta). Não é probabilidade calibrada.")
 UNCERTAINTY_FLOOR_PP = 2.5
 RECENT_WINDOW_MIN = 10.0
+# Abaixo disso a amostra é pequena e enviesada pela ordem de chegada (exterior, UFs pequenas):
+# a normal centrada na projeção daria "100%" sem base. Não vale para definição oficial.
+MIN_PCT_SECOES_CHANCE = 5.0
 
 
 def chance_above_half(pct: float, pct_min: float, pct_max: float, remaining_frac: float) -> float:
@@ -308,7 +311,7 @@ class Thermometer:
     recente_pct: float | None  # quanto fez dos votos apurados nos últimos RECENT_WINDOW_MIN min
     recente_janela_min: float | None
     validos_restantes: int
-    chance_pct: float
+    chance_pct: float | None  # None: seções apuradas insuficientes para o palpite
     rotulo: str
     definido: bool
 
@@ -363,9 +366,12 @@ def thermometer(br: Result, projection: Projection | None, official: list[dict])
     else:
         k = br.counts
         remaining_frac = k.eleitorado_nao_totalizado / k.eleitorado if k.eleitorado else 1.0
-        chance = chance_above_half(cand.pct, cand.pct_min, cand.pct_max, remaining_frac)
+        chance = (chance_above_half(cand.pct, cand.pct_min, cand.pct_max, remaining_frac)
+                  if k.pct_secoes >= MIN_PCT_SECOES_CHANCE else None)
     if definido:
         rotulo = "empate" if chance == 50 else ("eleito" if chance == 100 else "sem chance matemática")
+    elif chance is None:
+        rotulo = "dados insuficientes"
     else:
         rotulo = chance_label(chance)
     return Thermometer(

@@ -76,6 +76,7 @@ class EventDetector:
             model is not None and pair is not None and br.votos_validos > 0
             and br.andamento == "p" and not model.definido
             and model.necessario_pct is not None and model.projetado_pct is not None
+            and model.chance_pct is not None
         )
         if model_available:
             if model.chance_pct >= MODEL_CALL_THRESHOLD:
@@ -164,7 +165,10 @@ class EventDetector:
         if idle < STALE_AFTER_MIN:
             return None
         self._stale_sent = True
-        return Event("sem_atualizacao", f"Sem atualização do TSE há {idle:.0f} min", now, br.totalizado_em)
+        # Sem totalizado_em: o carimbo exibido é o de quando o aviso disparou, não o do último dado.
+        return Event("sem_atualizacao", f"Sem atualização do TSE há {idle:.0f} min", now,
+                     payload={"ultimo_totalizado_em":
+                              br.totalizado_em.isoformat(timespec="seconds") if br.totalizado_em else None})
 
 
 NOTIFY_TYPES = {"virada", "virada_projecao", "marco", "uf_finalizada", "definido", "tse_md", "eleito",

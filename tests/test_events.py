@@ -76,6 +76,25 @@ def test_repeated_identical_results_do_not_postpone_stale_warning():
     assert detector.check_stale(br, NOW + timedelta(minutes=12)) is None
 
 
+def test_stale_warning_is_stamped_with_the_moment_it_fired_not_the_last_tse_data():
+    detector = EventDetector()
+    br, projection = scenario(500)
+    br = replace(br, totalizado_em=datetime(2026, 10, 25, 17, 6, 27))
+    detector.update(br, None, projection, NOW)
+    warning = detector.check_stale(br, NOW + timedelta(minutes=12))
+    assert warning.captured_at == NOW + timedelta(minutes=12) and warning.totalizado_em is None
+    assert warning.payload['ultimo_totalizado_em'] == '2026-10-25T17:06:27'
+
+
+def test_no_model_call_below_minimum_sections():
+    detector = EventDetector()
+    br, projection = scenario(500)
+    detector.update(br, None, projection, NOW)
+    br, projection = scenario(540)
+    early = replace(br, counts=replace(br.counts, secoes_totalizadas=br.counts.secoes_total // 100, pct_secoes=1.0))
+    assert not any(e.type == 'projecao_definida' for e in detector.update(early, None, projection, NOW))
+
+
 def test_not_defined_tse_flag_does_not_emit_definition():
     detector = EventDetector()
     br, _ = scenario(500)

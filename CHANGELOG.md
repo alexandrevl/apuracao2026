@@ -2,6 +2,13 @@
 
 Mudanças relevantes para quem usa o projeto. Datas no fuso de Brasília.
 
+## [Não lançado]
+
+### Corrigido
+- Horários do painel e dos registros (`checado`, `capturado_em`, carimbo dos eventos) agora usam horário de Brasília, o mesmo relógio do TSE, em qualquer fuso da máquina. Registros gravados antes desta mudança guardam a hora local da máquina em `captured_at`.
+- O aviso "Sem atualização do TSE" leva a hora em que disparou (antes mostrava a do último dado) e não se repete ao reabrir o `watch` para o mesmo dado parado.
+- A chance estimada some (`chance_pct: null`, "dados insuficientes") com menos de 5% das seções apuradas, quando a amostra é pequena e enviesada; também não gera `projecao_definida` nesse ponto.
+
 ## [0.1.0] — 2026-10-25
 
 Primeira versão pública, para acompanhar o 2º turno presidencial de 25/10/2026.

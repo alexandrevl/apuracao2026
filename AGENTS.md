@@ -33,7 +33,7 @@ Comando: `apuracao` (via `uv tool install -e .`; dentro do checkout também func
 
 ```jsonc
 {
-  "fonte": "tse", "eleicao": "6258", "capturado_em": "2026-10-25T19:42:15", "erro": null,
+  "fonte": "tse", "eleicao": "6258", "capturado_em": "2026-10-25T19:42:15", "erro": null,   // capturado_em em horário de Brasília, o mesmo relógio de totalizado_em
   "abrangencia": "br",
   "andamento": "p",                       // n não iniciada · p parcial · f finalizada
   "tse": { "idg": "…", "gerado_em": "…", "totalizado_em": "…", "matematicamente_definido": "e|s|n|null" },
@@ -80,7 +80,7 @@ Comando: `apuracao` (via `uv tool install -e .`; dentro do checkout também func
     "projecao_pct_restante": 48.3,       // quanto a projeção dá a ele no restante
     "gap_pp": 3.9,                       // necessário − projeção (positivo = falta ritmo)
     "recente_pct": 48.8, "recente_janela_min": 5.0,   // % dele nos votos que entraram na janela recente
-    "validos_restantes": …, "chance_pct": 6.1, "rotulo": "difícil", "definido": false, "aviso": "…" }
+    "validos_restantes": …, "chance_pct": 6.1, "rotulo": "difícil", "definido": false, "aviso": "…" }  // chance_pct null + rotulo "dados insuficientes" com <5% das seções (sem definição oficial)
 }
 ```
 
@@ -118,7 +118,7 @@ O gráfico mostra a necessidade no intervalo visual 0–100%, sem alterar a cont
 
 ## Tipos de evento
 
-`lideranca` (primeiros votos), `virada`, `virada_projecao`, `marco` (1/10/25/50/75/90/95/99/100%), `uf_finalizada`, `definido`, `tse_md` (TSE sinalizou `md`), `eleito`, `sem_atualizacao` (10 min sem mudança em andamento).
+`lideranca` (primeiros votos), `virada`, `virada_projecao`, `marco` (1/10/25/50/75/90/95/99/100%), `uf_finalizada`, `definido`, `tse_md` (TSE sinalizou `md`), `eleito`, `sem_atualizacao` (10 min sem mudança em andamento; carimbado com a hora em que disparou, traz `payload.ultimo_totalizado_em` e não se repete para o mesmo dado parado ao reabrir o `watch`).
 
 `projecao_definida`: modelo indica um vencedor ao atingir chance estimada ≥99% (para qualquer candidato), com votos apurados e restante estimado disponível. É uma estimativa não calibrada, não definição matemática. `projecao_retirada`: retira essa indicação se a chance cair abaixo do limiar, mudar o candidato ou o restante estimado ficar indisponível, antes da definição oficial. Ao abrir o watch, o detector memoriza a situação sem repetir indicações antigas.
 

@@ -170,6 +170,32 @@ def test_tracker_downloads_only_what_changed(tmp_path):
     assert tracker.state.ufs["sp"].candidate(A).votos == 60
 
 
+def test_stale_warning_uses_brasilia_clock_and_survives_restart_without_repeating(tmp_path, monkeypatch):
+    clock = [datetime(2026, 10, 25, 18, 0)]
+    monkeypatch.setattr("apuracao.tracker.now_brt", lambda: clock[0])
+    src = FakeSource()
+    src.advance("sp", 60, 40, 0.1)
+    src.results["br"] = make_result("br", 60, 40, 0.01)[0]
+    src.results["br"].update({"and": "p", "dt": "25/10/2026", "ht": "17:06:27"})
+
+    def warnings(store):
+        return [e for e in store.events() if e["type"] == "sem_atualizacao"]
+
+    store = Store(tmp_path)
+    tracker = Tracker(src, store, baseline())
+    tracker.poll()
+    clock[0] = datetime(2026, 10, 25, 18, 11)
+    tracker.poll()
+    assert tracker.state.last_check == datetime(2026, 10, 25, 18, 11)
+    assert [w["captured_at"] for w in warnings(store)] == ["2026-10-25T18:11:00"]
+
+    restarted = Tracker(src, store, baseline())
+    restarted.poll()
+    clock[0] = datetime(2026, 10, 25, 18, 30)
+    restarted.poll()
+    assert len(warnings(store)) == 1
+
+
 def test_thermometer_never_declares_result_from_estimated_remaining():
     # UFs defasadas (totais pequenos) e BR já bem à frente: o restante estimado fica negativo,
     # mas o TSE ainda tem eleitorado não totalizado e a apuração não terminou.

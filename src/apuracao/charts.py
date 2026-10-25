@@ -12,7 +12,7 @@ from rich.console import Group
 from rich.table import Table
 from rich.text import Text
 
-from .analysis import _remaining_shares, chance_above_half, finalists
+from .analysis import MIN_PCT_SECOES_CHANCE, _remaining_shares, chance_above_half, finalists
 from .tracker import State
 
 PLT_COLORS = ("red", "blue")  # mesma ordem das cores do painel (1º e 2º na ordem oficial)
@@ -77,6 +77,7 @@ def projection_series(state: State) -> dict[str, list[float]]:
         else:
             out["chance"].append(
                 (100.0 if winner == a else 0.0) if winner else
+                None if x < MIN_PCT_SECOES_CHANCE else
                 chance_above_half(ca["pct"], ca["pct_min"], ca["pct_max"], frac)
             )
         closed = closed_at is not None and row["totalizado_em"] >= closed_at
@@ -176,7 +177,11 @@ def draw_chance(plt, state: State) -> None:
     if not s["x"]:
         _empty(plt, "Chance")
         return
-    plt.plot(s["x"], s["chance"], color=PLT_COLORS[0], marker="braille")
+    points = [(x, c) for x, c in zip(s["x"], s["chance"], strict=True) if c is not None]
+    if not points:
+        _empty(plt, f"Chance (disponível a partir de {MIN_PCT_SECOES_CHANCE:.0f}% das seções)")
+        return
+    plt.plot([x for x, _ in points], [c for _, c in points], color=PLT_COLORS[0], marker="braille")
     plt.hline(50, "white")
     plt.ylim(0, 100)
     plt.yticks([0, 25, 50, 75, 100], ["0%", "25%", "50%", "75%", "100%"])

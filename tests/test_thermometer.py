@@ -46,6 +46,28 @@ def test_official_definition_and_final_count_stop_the_remaining_vote_calculation
     assert t.definido and t.necessario_pct is None and t.projetado_pct is None
 
 
+def test_chance_is_withheld_until_enough_sections_are_counted():
+    br, projection = scenario(frac=0.01)
+    t = thermometer(br, projection, [])
+    assert t.chance_pct is None and t.rotulo == 'dados insuficientes' and not t.definido
+    br, projection = scenario(frac=0.06)
+    assert thermometer(br, projection, []).chance_pct is not None
+
+
+def test_chance_history_skips_points_below_minimum_sections():
+    state = State(source='fake', eleicao='6258')
+    br, _ = scenario()
+    state.br = br
+    row = {'pct_secoes': 1.0, 'totalizado_em': '2026-10-25T17:06:27', 'swing_pp': 0, 'validos_projetados': 1000,
+           'validos_atuais': 10, 'cand': {A: {'pct': 60.0, 'pct_min': 59.0, 'pct_max': 61.0, 'votos': 600,
+                                              'votos_atuais': 6},
+                                          '22': {'pct': 40.0, 'pct_min': 39.0, 'pct_max': 41.0, 'votos': 400,
+                                                 'votos_atuais': 4}}}
+    state.timeline_projections = [row, {**row, 'pct_secoes': 6.0, 'totalizado_em': '2026-10-25T17:30:00'}]
+    chance = projection_series(state)['chance']
+    assert chance[0] is None and chance[1] is not None
+
+
 def test_historical_thermometer_stops_at_official_definition_and_ignores_incompatible_data(tmp_path):
     store = Store(tmp_path)
     start = datetime(2026, 10, 25, 19)

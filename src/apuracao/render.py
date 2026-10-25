@@ -9,7 +9,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from .analysis import CHANCE_NOTICE, PROJECTION_NOTICE, finalists
+from .analysis import CHANCE_NOTICE, MIN_PCT_SECOES_CHANCE, PROJECTION_NOTICE, finalists
 from .regions import REGION_ORDER, UF_REGION, sorted_regions
 from .tracker import State
 
@@ -46,6 +46,7 @@ def header(state: State) -> Text:
     if state.br:
         t.append(f"  TSE totalizou {hm(state.br.totalizado_em)}  gerado {hm(state.br.gerado_em)}")
     t.append(f"  checado {hm(state.last_check)}", style="grey62")
+    t.append("  (horário de Brasília)", style="grey42")
     if state.error:
         t.append(f"\n ⚠ {state.error}", style="bold red")
     return t
@@ -124,6 +125,9 @@ def thermometer_panel(state: State, lo: float = 40.0, hi: float = 60.0, width: i
     elif t.definido:
         head.append("matematicamente eleito" if t.chance_pct == 100 else "sem chance matemática",
                     style="bold green" if t.chance_pct == 100 else "bold red")
+    elif t.chance_pct is None:
+        head.append(f"chance indisponível — {t.rotulo} "
+                    f"(abaixo de {MIN_PCT_SECOES_CHANCE:.0f}% das seções apuradas)", style="bold yellow")
     else:
         head.append(f"chance estimada {t.chance_pct:.0f}%", style=_chance_style(t.chance_pct))
         head.append(f" — {t.rotulo}", style=_chance_style(t.chance_pct))
@@ -500,7 +504,8 @@ def to_json(state: State, uf: str | None = None) -> dict:
         "recente_pct": None if t.recente_pct is None else round(t.recente_pct, 3),
         "recente_janela_min": None if t.recente_janela_min is None else round(t.recente_janela_min, 1),
         "validos_restantes": t.validos_restantes,
-        "chance_pct": round(t.chance_pct, 2), "rotulo": t.rotulo, "definido": t.definido,
+        "chance_pct": None if t.chance_pct is None else round(t.chance_pct, 2), "rotulo": t.rotulo,
+        "definido": t.definido,
         "aviso": CHANCE_NOTICE,
     }
     return out
