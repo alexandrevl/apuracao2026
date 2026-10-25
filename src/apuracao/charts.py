@@ -6,6 +6,8 @@ As funções ``draw_*`` recebem o objeto de desenho do plotext (o módulo ``plot
 
 from __future__ import annotations
 
+import math
+
 from rich.console import Group
 from rich.table import Table
 from rich.text import Text
@@ -181,7 +183,7 @@ def draw_chance(plt, state: State) -> None:
 
 
 def draw_margin(plt, state: State) -> None:
-    _base(plt, "Vantagem × eleitores restantes (mi, log)")
+    _base(plt, "Vantagem × eleitores restantes (escala log)")
     rows = state.timeline_official
     if not rows:
         _empty(plt, "Vantagem")
@@ -189,9 +191,18 @@ def draw_margin(plt, state: State) -> None:
     x = [r["pct_secoes"] for r in rows]
     lead = [max(abs(_diff(r)), 1) / 1e6 for r in rows]
     rest = [max(r["restante"], 1) / 1e6 for r in rows]
-    plt.plot(x, rest, color="gray", marker="braille", label="eleitores não apurados")
+    plt.plot(x, rest, color="orange", marker="braille", label="eleitores não apurados")
     plt.plot(x, lead, color="green", marker="braille", label="vantagem do líder")
     plt.yscale("log")
+    # A legenda ocupa as duas primeiras linhas; o eleitorado restante começa no topo da
+    # escala e ficaria inteiro atrás dela. Folga em escala log acima do maior valor.
+    lo, hi = math.log10(min(lead + rest)), math.log10(max(lead + rest))
+    span = max(hi - lo, 1.0)
+    top = hi + 0.35 * span
+    plt.ylim(lo - 0.05 * span, top)  # com yscale("log"), o plotext recebe ylim em log10...
+    labels = {-3: "1 mil", -2: "10 mil", -1: "100 mil", 0: "1 mi", 1: "10 mi", 2: "100 mi"}
+    ticks = [e for e in labels if lo - 0.05 * span <= e <= top]
+    plt.yticks([10.0 ** e for e in ticks], [labels[e] for e in ticks])  # ...e marcas na unidade dos dados
 
 
 def _diff(row: dict) -> int:
