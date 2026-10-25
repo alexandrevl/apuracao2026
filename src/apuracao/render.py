@@ -353,7 +353,7 @@ def polls_panel(state: State) -> Panel:
         body: Table | Text = Text(f"⚠ {state.polls_error}", style="bold red")
         return Panel(body, title=title, border_style="magenta")
     if not state.polls:
-        return Panel(Text("Sem comparação: nenhuma pesquisa em data/pesquisas.json ou apuração ainda sem dados.",
+        return Panel(Text("Sem comparação: nenhuma pesquisa na lista ou apuração ainda sem dados.",
                           style="grey62"), title=title, border_style="magenta")
     br = state.br
     pair = finalists(br)
@@ -378,7 +378,7 @@ def polls_panel(state: State) -> Panel:
         p = c.poll
         day = p.campo_fim or p.divulgacao  # AAAA-MM-DD
         campo = f"{day[8:10]}/{day[5:7]}" if len(day) >= 10 else "—"
-        nome = p.instituto + (" *" if p.validos_calculado else "")
+        nome = p.instituto + (" *" if p.validos_calculado else "") + ("" if p.fonte_confirmada else " †")
         diff = "—" if c.diferenca_pp is None else f"{c.diferenca_pp:+.1f}".replace(".", ",")
         margem = {True: Text("✔", style="green"), False: Text("✘", style="red"),
                   None: Text("—", style="grey62")}[c.dentro_margem]
@@ -391,9 +391,12 @@ def polls_panel(state: State) -> Panel:
             pct(c.projecao_a, 1), pct(c.oficial_a, 1), pct(c.pct_secoes, 0),
             Text(diff, style="bold"), ref, margem,
         )
+    origem = {"pessoal": "lista pessoal (pesquisas.json no diretório de dados)",
+              "projeto": "lista do projeto"}.get(state.polls_origem or "", "—")
     note = Text(f"Proj./Ofic.: {nomes[a]} na projeção e no placar parcial · Δ = pesquisa − referência "
                 f"(+ = pesquisa deu mais a {nomes[a]}) · Ref.: proj. até a abrangência finalizar, depois FINAL · "
-                "Marg.: |Δ| ≤ margem · * válidos calculados dos totais · menor |Δ| primeiro.",
+                "Marg.: |Δ| ≤ margem · * válidos calculados dos totais · † fonte secundária, números não "
+                f"confirmados na fonte original · menor |Δ| primeiro · Lista: {origem}.",
                 style="italic grey62")
     return Panel(Group(table, note), title=title, border_style="magenta")
 
@@ -506,12 +509,14 @@ def to_json(state: State, uf: str | None = None) -> dict:
 def polls_json(state: State, abr: str | None = None) -> dict:
     return {
         "erro": state.polls_error,
+        "lista": state.polls_origem,
         "nota": "diferenca_pp = pesquisa − referência (% válidos do 1º candidato na ordem oficial, 13 LULA). "
                 "Referência = projeção até a abrangência finalizar; depois, resultado final oficial.",
         "comparacoes": [
             {"instituto": c.poll.instituto, "abr": c.poll.abr, "divulgacao": c.poll.divulgacao,
              "campo_fim": c.poll.campo_fim, "registro_tse": c.poll.registro_tse, "margem_pp": c.poll.margem_pp,
              "validos": c.poll.validos, "validos_calculado": c.poll.validos_calculado, "fonte": c.poll.fonte,
+             "fonte_confirmada": c.poll.fonte_confirmada,
              "projecao_a": None if c.projecao_a is None else round(c.projecao_a, 3),
              "oficial_a": c.oficial_a, "pct_secoes": c.pct_secoes, "referencia": c.referencia,
              "diferenca_pp": None if c.diferenca_pp is None else round(c.diferenca_pp, 3),

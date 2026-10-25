@@ -19,7 +19,7 @@ from rich.console import Console
 
 from . import render
 from .baseline import load_baseline
-from .polls import PollBook
+from .polls import BUNDLED_POLLS, PollBook
 from .sources import ELEICAO_T1, ELEICAO_T2, UFS, CachedSource, SourceError, TseSource
 from .store import Store
 from .tracker import Tracker, next_delay
@@ -97,7 +97,8 @@ def _tracker(source: SourceName, *, notify: bool = False, fresh_sim: bool = Fals
         store = Store(root)
         if baseline is not None:
             store.save_baseline(baseline)
-        tracker = Tracker(src, store, baseline, notify_events=notify, polls=PollBook(DATA_DIR / "pesquisas.json"))
+        tracker = Tracker(src, store, baseline, notify_events=notify,
+                          polls=PollBook(DATA_DIR / "pesquisas.json", fallback=BUNDLED_POLLS))
         if not cached:
             tracker.load_cached()
         return tracker

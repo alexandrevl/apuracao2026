@@ -100,7 +100,7 @@ Não confunda agregados regionais com um resultado regional oficial do TSE. `con
 
 ## Pesquisas
 
-Arquivo `data/pesquisas.json` (lista; editável, relido automaticamente). Campos obrigatórios: `instituto`, `abr` (`br` ou UF), `validos` (`{"13": x, "22": y}` somando ~100). Opcionais: `divulgacao`, `campo_inicio`, `campo_fim`, `registro_tse`, `amostra`, `margem_pp`, `validos_calculado`, `totais`, `fonte`, `obs`. Ordenação: por abrangência, menor `|diferenca_pp|` primeiro.
+Lista do projeto: `src/apuracao/pesquisas.json` (rodada mais recente de cada instituto nacional, conferida à mão, com link da fonte). Se existir `pesquisas.json` no diretório de dados, ela **substitui** a do projeto; o JSON informa qual está ativa em `pesquisas.lista` (`"projeto"` ou `"pessoal"`). O arquivo ativo é relido automaticamente. Campos obrigatórios: `instituto`, `abr` (`br` ou UF), `validos` (`{"13": x, "22": y}` somando ~100). Opcionais: `contratante`, `divulgacao`, `campo_inicio`, `campo_fim`, `registro_tse`, `amostra`, `margem_pp`, `validos_calculado`, `totais`, `fonte`, `fonte_confirmada` (padrão `true`; `false` = números só vistos em fonte secundária, marcado com † no painel), `obs`. Ordenação: por abrangência, menor `|diferenca_pp|` primeiro.
 
 Ao interpretar: o placar parcial (`oficial_a`) é enviesado pela ordem de chegada das UFs; use `diferenca_pp` (contra a projeção) como indicação e só trate como acerto/erro definitivo quando `referencia == "final"`. Pesquisas estaduais viram definitivas assim que a UF finaliza, bem antes do Brasil.
 
@@ -136,7 +136,7 @@ data/
   sim/ …                     simulação (apagada só com `watch -s sim --reset-sim`)
   t1/ …                      leituras do 1º turno
   preferences.json           tema escolhido no painel
-  pesquisas.json             pesquisas cadastradas pelo usuário (exemplo em examples/pesquisas.json)
+  pesquisas.json             lista pessoal de pesquisas; se existir, substitui src/apuracao/pesquisas.json
 ```
 
 Cada JSON bruto é escrito de forma atômica antes do commit no SQLite, então o banco nunca referencia um arquivo incompleto. Fechar o `watch` não recupera as versões publicadas enquanto ele estava fechado.

@@ -39,6 +39,7 @@ class State:
     requests: int = 0
     polls: list[PollComparison] = field(default_factory=list)
     polls_error: str | None = None
+    polls_origem: str | None = None  # "pessoal" | "projeto"
     timeline_official: list[dict] = field(default_factory=list)
     timeline_projections: list[dict] = field(default_factory=list)
     thermometer: Thermometer | None = None
@@ -98,12 +99,12 @@ class Tracker:
         return st
 
     def _compare_polls(self) -> None:
-        """Barato e sem rede: roda toda rodada para pegar edições do pesquisas.json."""
+        """Barato e sem rede: roda toda rodada para pegar edições da lista de pesquisas."""
         if self.polls is None:
             return
         st = self.state
         st.polls = compare(self.polls.refresh(), st.br, st.ufs, st.projection)
-        st.polls_error = self.polls.error
+        st.polls_error, st.polls_origem = self.polls.error, self.polls.origem
 
     def _fetch(self, kind: str, abr: str = "br"):
         self.state.requests += 1

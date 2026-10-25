@@ -4,7 +4,7 @@ import os
 import pytest
 
 from apuracao.analysis import project
-from apuracao.polls import PollBook, compare
+from apuracao.polls import BUNDLED_POLLS, PollBook, compare
 from apuracao.sources import UFS
 from test_core import A, B, baseline, make_result
 
@@ -57,3 +57,27 @@ def test_bad_edit_keeps_last_valid_polls_and_reports_error(tmp_path):
     os.utime(pb.path, (1, 1))  # garante mtime diferente
     assert len(pb.refresh()) == 1
     assert "abr inválida" in pb.error
+
+
+def test_personal_list_replaces_project_list_and_switches_back_when_removed(tmp_path):
+    project_file = tmp_path / "projeto.json"
+    project_file.write_text(json.dumps({"pesquisas": [poll(instituto="Projeto A"), poll(instituto="Projeto B")]}))
+    personal = tmp_path / "pesquisas.json"
+    pb = PollBook(personal, fallback=project_file)
+    assert [p.instituto for p in pb.refresh()] == ["Projeto A", "Projeto B"] and pb.origem == "projeto"
+    personal.write_text(json.dumps([poll(instituto="Minha")]))
+    assert [p.instituto for p in pb.refresh()] == ["Minha"] and pb.origem == "pessoal"
+    personal.unlink()
+    assert len(pb.refresh()) == 2 and pb.origem == "projeto"
+
+
+def test_project_poll_list_is_valid_national_and_sourced():
+    raw = json.loads(BUNDLED_POLLS.read_text(encoding="utf-8"))
+    polls = PollBook(BUNDLED_POLLS).refresh()
+    assert polls and len(polls) == len(raw["pesquisas"])
+    institutes = [p.instituto for p in polls]
+    assert len(institutes) == len(set(institutes))  # uma rodada (a mais recente) por instituto
+    for p, item in zip(polls, raw["pesquisas"]):
+        assert p.abr == "br" and p.fonte and p.fonte.startswith("https://")
+        assert item.get("campo_fim") and p.margem_pp is not None
+        assert abs(sum(p.validos.values()) - 100) <= 0.2

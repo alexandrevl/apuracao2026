@@ -27,7 +27,7 @@ Este é o meu jeito de olhar a eleição. O código está aberto para que outra 
 - **Projeção própria por UF**, com referência do 1º turno e faixa de cenários.
 - **Swing, ritmo e ETA:** mudanças em relação ao 1º turno, velocidade de totalização e extrapolação de término.
 - **Eventos com histórico rolável:** viradas, marcos, UFs finalizadas, indicação do modelo, definição matemática e encerramento.
-- **Pesquisas cadastráveis:** régua e comparação com a projeção; comparação definitiva quando a abrangência finaliza.
+- **Pesquisas já cadastradas:** a rodada mais recente de cada instituto nacional, conferida e com link para a fonte; régua e comparação com a projeção, definitiva quando a abrangência finaliza.
 - **SQLite + JSON originais:** a evolução permanece gravada para analisar depois.
 - **Consultas únicas e JSON para agentes:** sem precisar manter um segundo polling.
 - **Temas selecionáveis**, com a escolha salva entre sessões, e modo simples para terminal ou log.
@@ -125,16 +125,18 @@ Percentuais são calculados pelas somas dos votos e das seções, nunca pela mé
 
 ![Régua e tabela de pesquisas fictícias para demonstração](docs/images/pesquisas.png)
 
-O projeto não vem com uma lista de pesquisas reais nem faz coleta automática delas. Você cadastra os levantamentos que verificou no arquivo `pesquisas.json` do diretório de dados. A lista é relida quando editada, sem reiniciar o painel.
+O projeto já vem com uma lista das pesquisas nacionais do 2º turno: a rodada mais recente de cada instituto, com votos válidos, datas de campo, registro no TSE, margem e link para a página onde os números foram conferidos. Ela fica em [`src/apuracao/pesquisas.json`](src/apuracao/pesquisas.json) e chega com `git pull`. Não há coleta automática: a lista é montada e conferida à mão.
 
-No checkout, há um exemplo **fictício**, que não deve ser confundido com levantamento publicado:
+Pesquisas cujos números só foram encontrados em fonte secundária aparecem com **†** no painel e `"fonte_confirmada": false` no JSON. Válidos calculados a partir dos votos totais aparecem com **\***.
+
+Quer usar a sua própria lista? Crie `pesquisas.json` no diretório de dados (no checkout, `data/pesquisas.json`). Ela **substitui** a do projeto por inteiro e é relida quando você edita, sem reiniciar o painel. Para voltar à lista do projeto, apague ou renomeie o arquivo. O formato está em [AGENTS.md](AGENTS.md#pesquisas); a forma mais fácil de começar é copiar a lista do projeto:
 
 ```bash
 mkdir -p data
-cp -n examples/pesquisas.json data/pesquisas.json
+cp src/apuracao/pesquisas.json data/pesquisas.json
 ```
 
-Substitua o exemplo por pesquisas verificadas, guardando votos válidos, datas de campo, registro TSE, margem e URL da fonte. O formato completo está em [AGENTS.md](AGENTS.md#pesquisas).
+Viu uma pesquisa nova ou um número errado? Abra uma issue ou um PR com o link da fonte.
 
 **Durante a parcial**, o ranking compara com a projeção própria, porque a ordem de chegada das UFs distorce o placar. Isso não prova acerto nem erro de instituto. **Quando a abrangência finaliza**, a referência passa a ser o resultado final.
 
@@ -192,7 +194,7 @@ data/
   sim/                   histórico simulado
   t1/                    consultas ao 1º turno
   preferences.json       tema escolhido
-  pesquisas.json         sua lista de pesquisas, se cadastrada
+  pesquisas.json         sua lista pessoal, se quiser substituir a do projeto
 ```
 
 No checkout editável, esse diretório é `data/` dentro do projeto. Em uma instalação normal de pacote, usa `$XDG_DATA_HOME/apuracao` quando configurado com caminho absoluto, ou `~/.local/share/apuracao`. Para escolher outro local:

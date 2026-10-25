@@ -1,0 +1,389 @@
+{
+  "atualizado_em": "2026-10-25",
+  "nota": "Pesquisas nacionais do 2º turno presidencial de 2026: a rodada mais recente de cada instituto. Números conferidos na página indicada em 'fonte'. Votos válidos (13 LULA × 22 FLAVIO BOLSONARO); 'validos_calculado': true quando calculados a partir dos totais publicados.",
+  "pesquisas": [
+    {
+      "instituto": "Quaest",
+      "contratante": "Editora Globo/Globo Comunicacao e Participacoes",
+      "abr": "br",
+      "divulgacao": "2026-10-24",
+      "campo_inicio": "2026-10-23",
+      "campo_fim": "2026-10-24",
+      "registro_tse": "BR-09158/2026",
+      "amostra": 3702,
+      "margem_pp": 2.0,
+      "validos": {
+        "13": 49.0,
+        "22": 51.0
+      },
+      "validos_calculado": false,
+      "totais": {
+        "13": 45,
+        "22": 46,
+        "brancos_nulos": 8,
+        "indecisos": 1
+      },
+      "fonte": "https://www.poder360.com.br/poder-eleicoes-2026/flavio-tem-51-dos-votos-validos-contra-49-de-lula-diz-quaest/",
+      "obs": "Entrevistas presenciais. Validos publicados arredondados (inteiros). Divulgada 24/10 ~19h."
+    },
+    {
+      "instituto": "PoderData/Aya",
+      "contratante": "PoderData (recursos proprios; parceria de divulgacao Aya Bancah)",
+      "abr": "br",
+      "divulgacao": "2026-10-25",
+      "campo_inicio": "2026-10-23",
+      "campo_fim": "2026-10-24",
+      "registro_tse": "BR-02828/2026",
+      "amostra": 4000,
+      "margem_pp": 1.6,
+      "validos": {
+        "13": 49.0,
+        "22": 51.0
+      },
+      "validos_calculado": false,
+      "totais": null,
+      "fonte": "https://www.poder360.com.br/poderdata/flavio-tem-51-e-lula-tem-49-dos-votos-validos-diz-poderdata-aya-2/",
+      "obs": "Telefone (fixo e celular, URA). Validos publicados arredondados (inteiros), iguais aos de 22/10. Totais nao constam no texto aberto (estao nos graficos/PDF do relatorio). Publicada 25/10 0h01."
+    },
+    {
+      "instituto": "Palver",
+      "contratante": "Recursos proprios",
+      "abr": "br",
+      "validos_calculado": true,
+      "divulgacao": "2026-10-24",
+      "campo_inicio": "2026-10-22",
+      "campo_fim": "2026-10-24",
+      "registro_tse": "BR-01794/2026",
+      "amostra": 5000,
+      "margem_pp": 2.2,
+      "validos": {
+        "13": 49.5,
+        "22": 50.5
+      },
+      "totais": {
+        "13": 49,
+        "22": 50,
+        "brancos_nulos_nao_vao_votar": 1,
+        "indecisos": 0
+      },
+      "fonte": "https://www.gazetadopovo.com.br/eleicoes/2026/pesquisa-eleitoral-2026/palver-presidente-outubro-2026-vespera-segundo-turno/",
+      "obs": "Instituto nao divulgou votos validos; calculados dos totais (49/99 e 50/99). Online, nao probabilistica. Tambem em exame.com/brasil/pesquisa-para-presidente-palver-flavio-bolsonaro-tem-50-e-lula-49-no-2o-turno/ e congressoemfoco.com.br/noticia/123601/palver-que-acertou-ordem-no-1-turno-aponta-flavio-50-e-lula-49 ."
+    },
+    {
+      "instituto": "Gerp",
+      "contratante": "Proprio instituto",
+      "abr": "br",
+      "divulgacao": "2026-10-24",
+      "campo_inicio": "2026-10-22",
+      "campo_fim": "2026-10-24",
+      "registro_tse": "BR-09327/2026",
+      "amostra": 2400,
+      "margem_pp": 2.0,
+      "validos": {
+        "13": 48.0,
+        "22": 52.0
+      },
+      "validos_calculado": false,
+      "totais": {
+        "13": 46,
+        "22": 49,
+        "brancos_nulos": 1,
+        "indecisos": 3
+      },
+      "fonte": "https://www.gazetadopovo.com.br/eleicoes/2026/pesquisa-eleitoral-2026/gerp-presidente-outubro-1026-vespera-segundo-turno/",
+      "obs": "Entrevistas por telefone; confianca 95,55%. Totais (49/46; 3% nao sabe; 1% nenhum) vem do Jovem Pan (https://jovempan.com.br/politica/flavio-x-lula-o-que-dizem-as-pesquisas-divulgadas-na-vespera-do-2o-turno/), no qual 'brancos_nulos'=1 e 'indecisos'=3. Inicio do campo: Gazeta (pagina da pesquisa) e Jovem Pan dizem 22/10; resumo da Gazeta diz 21/10."
+    },
+    {
+      "instituto": "Futura/Apex",
+      "contratante": "Proprio instituto (Futura Inteligencia/100% Cidades Nacionais)",
+      "abr": "br",
+      "divulgacao": "2026-10-24",
+      "campo_inicio": "2026-10-23",
+      "campo_fim": "2026-10-24",
+      "registro_tse": "BR-09726/2026",
+      "amostra": 2000,
+      "margem_pp": 2.2,
+      "validos": {
+        "13": 49.9,
+        "22": 50.1
+      },
+      "validos_calculado": false,
+      "totais": null,
+      "fonte": "https://www.cnnbrasil.com.br/eleicoes/futura-flavio-tem-501-dos-votos-validos-no-2o-turno-lula-499/",
+      "obs": "Pesquisa com recursos proprios. Totais estimulados nao encontrados nas fontes abertas. Espontanea: Lula 46,6, Flavio 46,1 (Gazeta do Povo). Divulgada 24/10 20h32."
+    },
+    {
+      "instituto": "Datafolha",
+      "contratante": "Folha de S.Paulo/Globo",
+      "abr": "br",
+      "divulgacao": "2026-10-24",
+      "campo_inicio": "2026-10-23",
+      "campo_fim": "2026-10-24",
+      "registro_tse": "BR-09540/2026",
+      "amostra": 4050,
+      "margem_pp": 2.0,
+      "validos": {
+        "13": 49.0,
+        "22": 51.0
+      },
+      "validos_calculado": false,
+      "totais": {
+        "13": 47,
+        "22": 48,
+        "brancos_nulos": 3,
+        "indecisos": 2
+      },
+      "fonte": "https://g1.globo.com/politica/eleicoes/2026/pesquisa-eleitoral/noticia/2026/10/24/datafolha-presidente-24-outubro.ghtml",
+      "obs": "Validos publicados arredondados (inteiros). Modelo com propensao a comparecer (novo): alta propensao (76%) Flavio 52 x Lula 48; baixa/media (24%) Lula 52 x Flavio 48. Divulgada 24/10 18h30."
+    },
+    {
+      "instituto": "BTG/Nexus",
+      "contratante": "BTG Pactual",
+      "abr": "br",
+      "divulgacao": "2026-10-24",
+      "campo_inicio": "2026-10-23",
+      "campo_fim": "2026-10-24",
+      "registro_tse": "BR-08234/2026",
+      "amostra": 2000,
+      "margem_pp": 2.2,
+      "validos": {
+        "13": 49.5,
+        "22": 50.5
+      },
+      "validos_calculado": false,
+      "totais": {
+        "13": 46.0,
+        "22": 47.0,
+        "brancos_nulos": 5.2,
+        "indecisos": 1.8
+      },
+      "fonte": "https://veja.abril.com.br/politica/a-nova-pesquisa-btg-nexus-sobre-a-disputa-flavio-x-lula-a-ultima-antes-do-segundo-turno/",
+      "obs": "Entrevistas por telefone (90% em 24/10). Modelo de eleitor provavel (abstencao estimada 21%): Flavio 52,4 x Lula 47,6 nos validos."
+    },
+    {
+      "instituto": "Instituto França",
+      "contratante": "Recursos proprios",
+      "abr": "br",
+      "divulgacao": "2026-10-24",
+      "campo_inicio": "2026-10-21",
+      "campo_fim": "2026-10-23",
+      "registro_tse": "BR-04863/2026",
+      "amostra": 1537,
+      "margem_pp": 2.5,
+      "validos": {
+        "13": 48.6,
+        "22": 51.4
+      },
+      "validos_calculado": false,
+      "totais": {
+        "13": 43.1,
+        "22": 45.6,
+        "brancos_nulos": 7.4,
+        "indecisos": 3.9
+      },
+      "fonte": "https://www.poder360.com.br/poder-eleicoes-2026/flavio-tem-514-contra-486-de-lula-em-votos-validos-diz-pesquisa/",
+      "obs": "Totais conferidos no Congresso em Foco (https://www.congressoemfoco.com.br/noticia/123590/flavio-tem-51-4-dos-votos-validos-lula-48-6--diz-instituto-franca); validos, campo, amostra, margem e registro conferidos na pagina do Poder360 (fonte). Custo R$ 50.000, recursos proprios."
+    },
+    {
+      "instituto": "Colectta",
+      "contratante": "Editora Brazil Economy",
+      "abr": "br",
+      "divulgacao": "2026-10-24",
+      "campo_inicio": "2026-10-23",
+      "campo_fim": "2026-10-23",
+      "registro_tse": "BR-05601/2026",
+      "amostra": 3000,
+      "margem_pp": 2,
+      "validos": {
+        "13": 50.3,
+        "22": 49.7
+      },
+      "validos_calculado": false,
+      "totais": {
+        "13": 46.5,
+        "22": 46,
+        "brancos_nulos": 4.4,
+        "indecisos": 3.1
+      },
+      "fonte": "https://www.congressoemfoco.com.br/noticia/123594/lula-tem-50-3-e-flavio-49-7-dos-votos-validos-diz-colectta",
+      "obs": "Campo de 1 dia (23/10), presencial, 101 municipios. Conferido em 3 paginas abertas: Congresso em Foco (fonte), Revista Forum (revistaforum.com.br/politica/lula-vira-sobre-flavio-bolsonaro-pesquisa-brazil-economy-colectta/) e Transmissao Politica; registro BR-05601/2026 citado nas tres."
+    },
+    {
+      "instituto": "CNT/MDA",
+      "contratante": "CNT (Confederacao Nacional do Transporte)",
+      "abr": "br",
+      "divulgacao": "2026-10-24",
+      "campo_inicio": "2026-10-21",
+      "campo_fim": "2026-10-23",
+      "registro_tse": "BR-02136/2026",
+      "amostra": 2032,
+      "margem_pp": 2.2,
+      "validos": {
+        "13": 49.3,
+        "22": 50.7
+      },
+      "validos_calculado": false,
+      "totais": {
+        "13": 45,
+        "22": 46.3
+      },
+      "fonte": "https://www.poder360.com.br/poder-eleicoes-2026/flavio-tem-507-dos-votos-validos-contra-493-de-lula-diz-cnt-mda/",
+      "obs": "Entrevistas presenciais. Custo R$ 222.453 pago pela CNT."
+    },
+    {
+      "instituto": "AtlasIntel",
+      "contratante": "Bloomberg/AtlasIntel",
+      "abr": "br",
+      "divulgacao": "2026-10-24",
+      "campo_inicio": "2026-10-18",
+      "campo_fim": "2026-10-23",
+      "registro_tse": "BR-06380/2026",
+      "amostra": 4990,
+      "margem_pp": 1.0,
+      "validos": {
+        "13": 49.2,
+        "22": 50.8
+      },
+      "validos_calculado": false,
+      "totais": {
+        "13": 48.4,
+        "22": 49.9,
+        "brancos_nulos_indecisos": 1.7
+      },
+      "fonte": "https://jovempan.com.br/politica/atlas-bloomberg-flavio-tem-508-dos-votos-validos-e-lula-492-em-empate-tecnico/",
+      "obs": "Recrutamento digital aleatorio (Atlas RDR). Brancos, nulos e indecisos informados em conjunto. Confirmado tambem em https://www.moneytimes.com.br/pesquisa-atlasintel-bloomberg-24-de-outubro-gaep/"
+    },
+    {
+      "instituto": "Vox Brasil",
+      "contratante": "Recursos proprios",
+      "abr": "br",
+      "divulgacao": "2026-10-23",
+      "campo_inicio": "2026-10-20",
+      "campo_fim": "2026-10-22",
+      "registro_tse": "BR-03259/2026",
+      "amostra": 2100,
+      "margem_pp": 2.15,
+      "validos": {
+        "13": 50.6,
+        "22": 49.4
+      },
+      "validos_calculado": false,
+      "totais": null,
+      "fonte": "https://www.poder360.com.br/poder-eleicoes-2026/lula-tem-506-contra-494-de-flavio-em-votos-validos-diz-vox/",
+      "obs": "Custo R$ 50.000 com recursos proprios."
+    },
+    {
+      "instituto": "Veritá",
+      "contratante": "Recursos proprios",
+      "abr": "br",
+      "divulgacao": "2026-10-23",
+      "campo_inicio": "2026-10-18",
+      "campo_fim": "2026-10-22",
+      "registro_tse": "BR-06070/2026",
+      "amostra": 15554,
+      "margem_pp": 1,
+      "validos": {
+        "13": 48.7,
+        "22": 51.3
+      },
+      "validos_calculado": false,
+      "totais": {
+        "13": 47.5,
+        "22": 50.2,
+        "brancos_nulos": 1.4,
+        "indecisos": 0.9
+      },
+      "fonte": "https://www.cnnbrasil.com.br/eleicoes/verita-flavio-tem-513-dos-votos-validos-no-2o-turno-lula-487/",
+      "obs": "Telefone. Totais confirmados no R7: noticias.r7.com/eleicoes/2026/verita-flavio-bolsonaro-tem-513-dos-votos-validos-e-lula-487-no-2-turno-23102026/ ."
+    },
+    {
+      "instituto": "Real Time Big Data",
+      "contratante": "Recursos proprios",
+      "abr": "br",
+      "divulgacao": "2026-10-23",
+      "campo_inicio": "2026-10-19",
+      "campo_fim": "2026-10-22",
+      "registro_tse": "BR-09670/2026",
+      "amostra": 2000,
+      "margem_pp": 2,
+      "validos": {
+        "13": 48,
+        "22": 52
+      },
+      "validos_calculado": false,
+      "totais": {
+        "13": 45,
+        "22": 49
+      },
+      "fonte": "https://www.brasildefato.com.br/2026/10/23/pesquisa-real-time-aponta-empate-tecnico-entre-lula-e-flavio-bolsonaro-a-dois-dias-do-segundo-turno/",
+      "obs": "Validos inteiros. Telefone (URA). Tambem em https://www.poder360.com.br/poder-eleicoes-2026/flavio-tem-52-contra-48-de-lula-em-votos-validos-diz-pesquisa/ ."
+    },
+    {
+      "instituto": "Ipespe/Abrapel",
+      "contratante": "Abrapel (recursos proprios)",
+      "abr": "br",
+      "divulgacao": "2026-10-23",
+      "campo_inicio": "2026-10-20",
+      "campo_fim": "2026-10-22",
+      "registro_tse": "BR-04350/2026",
+      "amostra": 1500,
+      "margem_pp": 2.6,
+      "validos": {
+        "13": 49.5,
+        "22": 50.5
+      },
+      "validos_calculado": false,
+      "totais": null,
+      "fonte": "https://www.poder360.com.br/poder-eleicoes-2026/flavio-tem-505-contra-495-de-lula-diz-ipespe-abrapel/",
+      "obs": "Espontanea: Flavio 47%, Lula 46%. Confianca 95,45%."
+    },
+    {
+      "instituto": "Alfa Inteligência",
+      "contratante": "Recursos proprios",
+      "abr": "br",
+      "divulgacao": "2026-10-23",
+      "campo_inicio": "2026-10-18",
+      "campo_fim": "2026-10-22",
+      "registro_tse": "BR-08496/2026",
+      "amostra": 2700,
+      "margem_pp": 1.9,
+      "validos": {
+        "13": 48,
+        "22": 52
+      },
+      "validos_calculado": false,
+      "totais": {
+        "13": 46,
+        "22": 49.9,
+        "brancos_nulos": 2,
+        "indecisos": 2.1
+      },
+      "fonte": "https://www.cnnbrasil.com.br/eleicoes/alfa-flavio-tem-52-dos-votos-validos-no-2o-turno-lula-48/",
+      "obs": "Validos, amostra, campo, margem e registro na pagina da CNN Brasil (fonte) e na do Poder360 (poder360.com.br/poder-eleicoes-2026/4-pesquisas-desta-6a-mostram-cenario-indefinido-entre-flavio-e-lula/); totais na Exame (exame.com/brasil/pesquisa-alfa-a-dois-dias-do-2o-turno-flavio-bolsonaro-tem-52-e-lula-48/). Custo R$ 50.000, recursos proprios. Rodada anterior (20/10): 51,5/48,5."
+    },
+    {
+      "instituto": "Meio/Ideia",
+      "contratante": "Meio",
+      "abr": "br",
+      "divulgacao": "2026-10-21",
+      "campo_inicio": "2026-10-15",
+      "campo_fim": "2026-10-19",
+      "registro_tse": "BR-08251/2026",
+      "amostra": 1500,
+      "margem_pp": 2.5,
+      "validos": {
+        "13": 49,
+        "22": 51
+      },
+      "validos_calculado": false,
+      "totais": {
+        "13": 46,
+        "22": 48,
+        "brancos_nulos": 3.4,
+        "indecisos": 2.6
+      },
+      "fonte": "https://exame.com/brasil/pesquisa-meio-ideia-flavio-bolsonaro-tem-51-e-lula-49-em-empate-tecnico/",
+      "obs": "Telefone. Contratante inferido do nome Meio/Ideia (a materia nao informa contratante)."
+    }
+  ]
+}

@@ -1,7 +1,8 @@
 """Comparação das pesquisas de 2º turno com a apuração.
 
-As pesquisas ficam em ``data/pesquisas.json`` (lista editável à mão; relida quando o
-arquivo muda). Para cada pesquisa compara-se o % de votos válidos do candidato A
+Lista do projeto (``pesquisas.json`` dentro do pacote, conferida e com fontes) ou, se existir,
+a lista pessoal ``pesquisas.json`` do diretório de dados, que a substitui por inteiro. O arquivo
+ativo é relido quando muda. Para cada pesquisa compara-se o % de votos válidos do candidato A
 (1º na ordem oficial) com:
 
 - a projeção da abrangência (Brasil ou UF) — referência enquanto a apuração não terminou;
@@ -21,6 +22,8 @@ from .analysis import Projection, finalists
 from .parse import Result
 from .sources import UFS
 
+BUNDLED_POLLS = Path(__file__).with_name("pesquisas.json")
+
 
 @dataclass(frozen=True)
 class Poll:
@@ -33,6 +36,7 @@ class Poll:
     validos: dict[str, float]
     validos_calculado: bool
     fonte: str | None
+    fonte_confirmada: bool = True  # False: números só vistos em fonte secundária
 
 
 @dataclass(frozen=True)
@@ -71,35 +75,49 @@ def _parse_poll(item: dict, index: int) -> Poll:
         validos=validos,
         validos_calculado=bool(item.get("validos_calculado")),
         fonte=item.get("fonte"),
+        fonte_confirmada=item.get("fonte_confirmada", True) is not False,
     )
 
 
 class PollBook:
-    """Lê ``pesquisas.json`` e relê quando o arquivo é alterado."""
+    """Lê a lista pessoal (``path``) ou, na falta dela, a do projeto (``fallback``)."""
 
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, fallback: Path | None = None):
         self.path = path
-        self._mtime: float | None = None
+        self.fallback = fallback
+        self._key: tuple[Path, float] | None = None
         self.polls: list[Poll] = []
         self.error: str | None = None
+        self.origem: str | None = None  # "pessoal" | "projeto" | None
+
+    def _active(self) -> tuple[Path, str] | None:
+        if self.path.exists():
+            return self.path, "pessoal"
+        if self.fallback is not None and self.fallback.exists():
+            return self.fallback, "projeto"
+        return None
 
     def refresh(self) -> list[Poll]:
+        active = self._active()
+        if active is None:
+            self.polls, self.error, self._key, self.origem = [], None, None, None
+            return self.polls
+        path, origem = active
         try:
-            mtime = self.path.stat().st_mtime
+            key = (path, path.stat().st_mtime)
         except FileNotFoundError:
-            self.polls, self.error, self._mtime = [], None, None
             return self.polls
-        if mtime == self._mtime:
+        if key == self._key:
             return self.polls
-        self._mtime = mtime
+        self._key = key
         try:
-            raw = json.loads(self.path.read_text())
+            raw = json.loads(path.read_text(encoding="utf-8"))
             items = raw["pesquisas"] if isinstance(raw, dict) else raw
             self.polls = [_parse_poll(item, i) for i, item in enumerate(items)]
-            self.error = None
+            self.error, self.origem = None, origem
         except (ValueError, KeyError, TypeError) as exc:
             # Mantém a última versão válida; o erro aparece no painel.
-            self.error = f"{self.path.name}: {exc}"
+            self.error = f"{path.name} ({origem}): {exc}"
         return self.polls
 
 
