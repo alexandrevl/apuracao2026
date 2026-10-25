@@ -132,38 +132,44 @@ def draw_timeline(plt, state: State) -> None:
 def draw_need(plt, state: State) -> None:
     pair = _pair(state)
     name = _names(state).get(pair[0], "") if pair else ""
-    title = (f"Restante de {name} · encerrado (definição oficial)"
+    title = (f"{name} no restante · encerrado (oficial)"
              if state.thermometer and state.thermometer.definido else
-             f"Restante de {name} · 0=meta est. · 100=limite est.")
+             f"{name} no restante: precisa × projeção")
     _base(plt, title)
     s = projection_series(state)
     if not s["x_need"]:
         if state.thermometer and state.thermometer.definido:
-            plt.title("Termômetro encerrado — definido pelos números oficiais; sem série anterior disponível")
+            plt.title("Termômetro encerrado (definição oficial)")
         else:
             _empty(plt, "Termômetro")
         plt.ylim(0, 100)
         return
-    need = [max(0.0, min(100.0, v)) for v in s["need"]]
+    need = [max(0.0, min(100.0, v)) for v in s["need"]]  # fora de 0–100 só no cenário estimado
     boundaries = [0, *s["need_breaks"], len(s["x_need"])]
     first = True
     for start, end in zip(boundaries, boundaries[1:]):
         if start == end:
             continue
-        plt.plot(s["x_need"][start:end], need[start:end], color="yellow", marker="braille",
-                 label="precisa (0–100%)" if first else None)
+        # "precisa" por último: se as curvas coincidirem, ela fica visível por cima.
         plt.plot(s["x_need"][start:end], s["proj_rest"][start:end], color=PLT_COLORS[0], marker="braille",
                  label="projeção do restante" if first else None)
+        plt.plot(s["x_need"][start:end], need[start:end], color="yellow", marker="braille",
+                 label="precisa" if first else None)
         first = False
     plt.hline(50, "white")
-    plt.ylim(0, 100)
-    plt.yticks([0, 25, 50, 75, 100], ["0%", "25%", "50%", "75%", "100%"])
+    # Escala ajustada aos dados (sempre com 50%), limitada a 0–100: com escala fixa 0–100,
+    # cada linha do terminal vale ~10 p.p. e as curvas perto de 50% se sobrepõem.
+    values = need + s["proj_rest"]
+    lo, hi = min([*values, 50.0]), max([*values, 50.0])
+    span = max(8.0, hi - lo + 2.0)
+    mid = min(max((lo + hi) / 2, span / 2), 100 - span / 2)
+    plt.ylim(max(0.0, mid - span / 2), min(100.0, mid + span / 2))
 
 
 def draw_chance(plt, state: State) -> None:
     pair = _pair(state)
     name = _names(state).get(pair[0], "") if pair else ""
-    _base(plt, f"Chance estimada de {name} (palpite, não probabilidade calibrada)")
+    _base(plt, f"Chance de {name} (palpite do modelo)")
     s = projection_series(state)
     if not s["x"]:
         _empty(plt, "Chance")
@@ -175,7 +181,7 @@ def draw_chance(plt, state: State) -> None:
 
 
 def draw_margin(plt, state: State) -> None:
-    _base(plt, "Vantagem do líder × eleitores não apurados (milhões, log) — cruzou = definido")
+    _base(plt, "Vantagem × eleitores restantes (mi, log)")
     rows = state.timeline_official
     if not rows:
         _empty(plt, "Vantagem")
