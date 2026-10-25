@@ -108,9 +108,13 @@ class Tracker:
         return st
 
     def _already_warned(self, stale: Event) -> bool:
-        """Reabrir o ``watch`` não repete o aviso para o mesmo dado parado do TSE."""
+        """Reabrir o ``watch`` não repete o aviso para o mesmo dado parado do TSE.
+
+        Avisos gravados antes de ``payload.ultimo_totalizado_em`` existir levam esse horário em ``totalizado_em``.
+        """
         last = stale.payload.get("ultimo_totalizado_em")
-        return any(e["type"] == "sem_atualizacao" and e["payload"].get("ultimo_totalizado_em") == last
+        return any(e["type"] == "sem_atualizacao"
+                   and (e["payload"].get("ultimo_totalizado_em") or e["totalizado_em"]) == last
                    for e in self.store.events())
 
     def _compare_polls(self) -> None:

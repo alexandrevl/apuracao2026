@@ -7,7 +7,7 @@ import pytest
 
 from apuracao.analysis import pace, project
 from apuracao.baseline import Baseline, BaselineUf
-from apuracao.events import EventDetector
+from apuracao.events import Event, EventDetector
 from apuracao.parse import parse_progress, parse_result
 from apuracao.sources import UFS, Fetched
 from apuracao.store import PacePoint, Store
@@ -194,6 +194,24 @@ def test_stale_warning_uses_brasilia_clock_and_survives_restart_without_repeatin
     clock[0] = datetime(2026, 10, 25, 18, 30)
     restarted.poll()
     assert len(warnings(store)) == 1
+
+
+def test_legacy_stale_warnings_without_payload_still_block_a_repeat(tmp_path, monkeypatch):
+    clock = [datetime(2026, 10, 25, 18, 0)]
+    monkeypatch.setattr("apuracao.tracker.now_brt", lambda: clock[0])
+    src = FakeSource()
+    src.advance("sp", 60, 40, 0.1)
+    src.results["br"] = make_result("br", 60, 40, 0.01)[0]
+    src.results["br"].update({"and": "p", "dt": "25/10/2026", "ht": "17:06:27"})
+    store = Store(tmp_path)
+    legacy = Event("sem_atualizacao", "Sem atualização do TSE há 10 min", datetime(2026, 10, 25, 22, 16),
+                   datetime(2026, 10, 25, 17, 6, 27))
+    store.save_events([legacy])
+    tracker = Tracker(src, store, baseline())
+    tracker.poll()
+    clock[0] = datetime(2026, 10, 25, 18, 30)
+    tracker.poll()
+    assert [e["type"] for e in store.events()] == ["sem_atualizacao"]
 
 
 def test_thermometer_never_declares_result_from_estimated_remaining():
