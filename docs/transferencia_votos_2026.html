@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Estimación ecológica de posibles flujos de voto entre las dos vueltas presidenciales de Brasil en 2026, basada en resultados oficiales agregados del TSE.">
+<link rel="icon" href="data:,">
+<title>Flujos estimados de voto | Brasil 2026</title>
+<style>
+:root{color-scheme:light;--ink:#172623;--muted:#64716e;--paper:#f5f7f5;--card:#fff;--line:#dfe7e2;--green:#155d53;--lime:#c7e3a0;--accent:#ebf3e9;--shadow:0 12px 32px #173e3210}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+.top{background:#102c28;color:#fff;padding:22px max(24px,calc((100vw - 1180px)/2));display:flex;justify-content:space-between;align-items:center;gap:20px}.brand{display:flex;align-items:center}.eyebrow{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#bdd4c9}.top h1{font-size:20px;margin:3px 0 0;line-height:1.2}.languages{display:flex;gap:6px}.languages button{background:transparent;color:#d5e5dd;border:1px solid #ffffff40;border-radius:999px;padding:7px 11px;font:600 12px system-ui,sans-serif;cursor:pointer}.languages button.active,.languages button:hover{background:#c7e3a0;color:#19352c;border-color:#c7e3a0}
+main{max-width:1180px;margin:32px auto;padding:0 24px 36px}.intro{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:22px}.intro h2{font-size:clamp(25px,4vw,38px);line-height:1.13;margin:0 0 10px;letter-spacing:-.035em}.intro p{max-width:790px;color:var(--muted);margin:0}.badge{white-space:nowrap;border:1px solid #d7e5d9;background:#edf5ec;color:#285e43;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:700}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:24px 0}.card,.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}.card{padding:17px 19px}.card .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}.card .value{font-size:23px;font-weight:750;margin-top:4px;letter-spacing:-.025em}.card .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.panel{padding:24px;margin:16px 0}.panelhead{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}.panel h3{margin:0;font-size:19px;letter-spacing:-.02em}.panelhead p{margin:4px 0 0;color:var(--muted);font-size:13px;max-width:780px}.graphwrap{overflow-x:auto}.graph{display:block;width:100%;min-width:760px;height:auto}.node-label{font-size:12px;fill:var(--ink);font-weight:650}.node-meta{font-size:11px;fill:var(--muted)}.target-label{font-size:15px;fill:var(--ink);font-weight:750}.flow{fill-opacity:.3;stroke:none}.source-node{stroke:#fff;stroke-width:1}.target-node{stroke:#fff;stroke-width:2}.graph-note{display:flex;gap:8px;align-items:flex-start;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:13px;margin-top:8px}
+.scenario-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:16px 0 10px}.scenario-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 18px}.scenario-row{display:grid;grid-template-columns:minmax(150px,1fr) minmax(180px,1.3fr);gap:10px;align-items:center;padding:11px 12px;border:1px solid var(--line);border-radius:10px}.scenario-label strong{display:block;font-size:12px;line-height:1.35}.scenario-label small{color:var(--muted);font-size:11px}.scenario-control{min-width:0}.scenario-inputs{display:grid;grid-template-columns:minmax(70px,1fr) 82px;gap:8px;align-items:center}.scenario-range{width:100%;accent-color:var(--green)}.scenario-number{width:100%;padding:5px 6px;border:1px solid var(--line);border-radius:6px;color:var(--ink);font:inherit;font-size:12px}.scenario-split{display:block;text-align:right;color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}.scenario-reset{border:1px solid #b8cdbf;border-radius:8px;background:#edf5ec;color:#285e43;padding:7px 11px;font:600 12px system-ui,sans-serif;cursor:pointer}.scenario-reset:hover{background:#dcebdc}.scenario-note{margin-top:12px}
+.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.055em;font-weight:700}th,td{padding:11px 10px;border-bottom:1px solid var(--line);white-space:nowrap}td.numeric,th.numeric{text-align:right;font-variant-numeric:tabular-nums}.candidate{display:flex;align-items:center;gap:8px}.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}.rate{font-weight:750}.subtle{color:var(--muted)}.modelgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}#scaleSummary{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:16px}.switchgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.modelbox{background:#f4f7f4;border-radius:12px;padding:16px}.modelbox strong{font-size:20px}.modelbox small{display:block;color:var(--muted);margin-top:4px}.method{background:#edf3ef;border-left:4px solid #639b70;border-radius:8px;padding:14px 16px;color:#35443e;font-size:13px}.foot{margin-top:26px;padding:20px 4px 0;border-top:1px solid var(--line);color:var(--muted);font-size:12px}.foot p{margin:8px 0}.foot a{color:var(--green)}.disclaimer{padding:13px 15px;background:#fff;border:1px solid var(--line);border-radius:10px;margin:10px 0}
+.sr{position:absolute;left:-9999px}@media(max-width:760px){.top{align-items:flex-start;padding:18px 18px}.top h1{font-size:16px}.languages{flex-wrap:wrap;justify-content:flex-end}.languages button{padding:6px 8px}.intro{display:block}.badge{display:inline-block;margin-top:13px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:14px}.card .value{font-size:19px}.panel{padding:17px}.modelgrid,#scaleSummary,.switchgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.scenario-grid{grid-template-columns:1fr}}@media(max-width:520px){.switchgrid{grid-template-columns:1fr}.scenario-row{grid-template-columns:1fr;gap:6px}.scenario-head{align-items:flex-start}}@media print{.top{background:#102c28!important;print-color-adjust:exact}.languages,.scenario-reset{display:none}body{background:#fff}.panel,.card{box-shadow:none;break-inside:avoid}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <div><div class="eyebrow" data-i="eyebrow">ANÁLISIS ELECTORAL · BRASIL 2026</div><h1 data-i="header">Estimación de flujos entre vueltas</h1></div>
+  </div>
+  <nav class="languages" aria-label="Language">
+    <button class="active" data-lang="es">ES</button><button data-lang="en">EN</button><button data-lang="de">DE</button>
+  </nav>
+</header>
+<main>
+  <section class="intro">
+    <div><h2 data-i="title">¿Cómo podrían haberse repartido los votos de los candidatos eliminados?</h2><p data-i="intro">Una estimación estadística a partir de resultados oficiales por estado. Los datos agregados no permiten observar ni demostrar cómo votó cada persona.</p></div>
+    <span class="badge" data-i="badge">ESTIMACIÓN ECOLÓGICA · NO ES UN CONTEO INDIVIDUAL</span>
+  </section>
+  <section class="cards" id="summary"></section>
+  <section class="panel">
+    <div class="panelhead"><div><h3 data-i="graphTitle">Flujos estimados desde los candidatos eliminados</h3><p data-i="graphSub">El grosor representa la asignación modelada de los votos válidos de primera vuelta de cada candidatura eliminada. No son transferencias observadas.</p></div></div>
+    <div class="graphwrap"><svg class="graph" id="flowGraph" role="img" aria-labelledby="graphTitle graphDesc"></svg></div>
+    <p class="sr" id="graphDesc"></p>
+    <div class="graph-note"><span aria-hidden="true">ⓘ</span><span data-i="graphNote">Solo se muestran las candidaturas que no pasaron a segunda vuelta. Los dos bloques de destino suman asignaciones estimadas de esos votos; no representan el total oficial obtenido por los finalistas.</span></div>
+  </section>
+  <section class="panel">
+    <div class="panelhead"><div><h3 data-i="scenarioTitle">Probar escenarios de transferencia</h3><p data-i="scenarioSub"></p></div></div>
+    <div class="scenario-head"><strong data-i="scenarioColumn"></strong><button class="scenario-reset" id="resetScenario" type="button" data-i="scenarioReset"></button></div>
+    <div class="scenario-grid" id="transferControls"></div>
+    <div class="graph-note scenario-note"><span aria-hidden="true">ⓘ</span><span data-i="scenarioNote"></span></div>
+  </section>
+  <section class="panel">
+    <div class="panelhead"><div><h3 data-i="scaleGraphTitle">Todos los votos válidos: primera vuelta frente a segunda vuelta</h3><p data-i="scaleGraphSub">Compara el volumen total de votos válidos de cada vuelta. Las candidaturas eliminadas y las dos finalistas de primera vuelta se estiman con el modelo estatal; el aumento neto de votos válidos se muestra aparte.</p></div></div>
+    <div class="graphwrap"><svg class="graph" id="scaleFlowGraph" role="img" aria-labelledby="scaleGraphTitle scaleGraphDesc"></svg></div>
+    <p class="sr" id="scaleGraphDesc"></p>
+    <div class="graph-note"><span aria-hidden="true">ⓘ</span><span data-i="scaleGraphNote">El grosor está en escala común: cada flujo se mide en votos. El bloque adicional representa la diferencia neta entre los totales oficiales de votos válidos de las vueltas, no un recuento de personas nuevas. Los flujos desde candidaturas individuales son estimaciones ecológicas y no transferencias observadas.</span></div>
+    <div class="modelgrid" id="scaleSummary"></div>
+  </section>
+  <section class="panel">
+    <div class="panelhead"><div><h3 data-i="switchTitle">¿Hubo cambios entre Lula y Flávio?</h3><p data-i="switchSub">El modelo ecológico puede sugerir cambios entre grupos; los resultados agregados no revelan los cambios individuales.</p></div></div>
+    <div class="switchgrid" id="switchScenarios"></div>
+  </section>
+  <section class="panel">
+    <div class="panelhead"><div><h3 data-i="tableTitle">Detalle de los votos de primera vuelta</h3><p data-i="tableSub">Porcentaje estimado de cada grupo que habría votado por cada finalista, con el tamaño del grupo oficial de primera vuelta.</p></div></div>
+    <div class="tablewrap"><table><thead id="flowHead"></thead><tbody id="flowRows"></tbody></table></div>
+  </section>
+  <section class="panel">
+    <div class="panelhead"><div><h3 data-i="fitTitle">Comprobación del modelo por estado</h3><p data-i="fitSub">Compara el porcentaje oficial de la candidatura ganadora en segunda vuelta con el valor que predice el modelo a partir de las mezclas de voto de la primera vuelta.</p></div></div>
+    <div class="modelgrid" id="modelSummary"></div>
+    <div class="tablewrap" style="margin-top:15px"><table><thead id="areaHead"></thead><tbody id="areaRows"></tbody></table></div>
+  </section>
+  <section class="panel">
+    <div class="panelhead"><div><h3 data-i="methodTitle">Método y límites</h3></div></div>
+    <div class="method" data-i="methodBody"></div>
+  </section>
+  <footer class="foot">
+    <p><strong data-i="sourceLabel">Fuentes oficiales:</strong> <a id="source1" target="_blank" rel="noopener">TSE · 1.ª vuelta</a> · <a id="source2" target="_blank" rel="noopener">TSE · 2.ª vuelta</a>. <span id="generated"></span></p>
+    <div class="disclaimer" data-i="aiDisclaimer"></div>
+  </footer>
+</main>
+<script>
+const D = {"generatedAt":"2026-10-26T14:20:58.907814+00:00","elections":{"first":"6257","second":"6258"},"candidateIds":["22","13","70","14","55","30","80","16","27","21","35","29"],"winnerId":"13","otherId":"22","winner":{"id":"13","name":"LULA","party":"PT"},"other":{"id":"22","name":"FLAVIO BOLSONARO","party":"PL"},"candidates":[{"id":"70","name":"ESCRITOR AUGUSTO CURY","party":"AVANTE","votes":3448569,"color":"#226d67","toWinner":0.5113087770706664,"toOther":0.48869122292933365,"flowWinner":1763284,"flowOther":1685285},{"id":"14","name":"RENAN SANTOS","party":"MISSÃO","votes":2675887,"color":"#c66d43","toWinner":0.5047724600581157,"toOther":0.4952275399418843,"flowWinner":1350714,"flowOther":1325173},{"id":"55","name":"RONALDO CAIADO","party":"PSD","votes":2605148,"color":"#7864aa","toWinner":0.49373701197452624,"toOther":0.5062629880254738,"flowWinner":1286258,"flowOther":1318890},{"id":"30","name":"ZEMA","party":"NOVO","votes":326488,"color":"#c59b36","toWinner":0.5153358420468555,"toOther":0.48466415795314455,"flowWinner":168251,"flowOther":158237},{"id":"80","name":"SAMARA","party":"UP","votes":122911,"color":"#4979a2","toWinner":0.5171186115406836,"toOther":0.4828813884593164,"flowWinner":63560,"flowOther":59351},{"id":"16","name":"HERTZ DIAS","party":"PSTU","votes":43103,"color":"#b5546a","toWinner":0.5177065174808372,"toOther":0.4822934825191628,"flowWinner":22315,"flowOther":20788},{"id":"27","name":"CLARIANA BARAO","party":"DC","votes":40043,"color":"#6f8f58","toWinner":0.517613914566454,"toOther":0.482386085433546,"flowWinner":20727,"flowOther":19316},{"id":"21","name":"EDMILSON COSTA","party":"PCB","votes":22693,"color":"#8b7768","toWinner":0.5177860606871028,"toOther":0.48221393931289724,"flowWinner":11750,"flowOther":10943},{"id":"35","name":"VETERINÁRIO WILSON GRASSI","party":"DEMOCRATA","votes":16881,"color":"#226d67","toWinner":0.5177724701915072,"toOther":0.4822275298084928,"flowWinner":8741,"flowOther":8140},{"id":"29","name":"RUI COSTA PIMENTA","party":"PCO","votes":15024,"color":"#c66d43","toWinner":0.5177763034937922,"toOther":0.4822236965062078,"flowWinner":7779,"flowOther":7245}],"scaleCandidates":[{"id":"22","name":"FLAVIO BOLSONARO","party":"PL","votes":56104503,"color":"#394b66","toWinner":0.14811255500943854,"flowWinner":8309781,"flowOther":47794722},{"id":"13","name":"LULA","party":"PT","votes":53879538,"color":"#155d53","toWinner":0.9051181812237198,"flowWinner":48767349,"flowOther":5112189},{"id":"70","name":"ESCRITOR AUGUSTO CURY","party":"AVANTE","votes":3448569,"color":"#226d67","toWinner":0.5112683050414523,"flowWinner":1763144,"flowOther":1685425},{"id":"14","name":"RENAN SANTOS","party":"MISSÃO","votes":2675887,"color":"#c66d43","toWinner":0.5047319710466638,"flowWinner":1350606,"flowOther":1325281},{"id":"55","name":"RONALDO CAIADO","party":"PSD","votes":2605148,"color":"#7864aa","toWinner":0.4936965256996403,"flowWinner":1286153,"flowOther":1318995},{"id":"30","name":"ZEMA","party":"NOVO","votes":326488,"color":"#c59b36","toWinner":0.5152953873706768,"flowWinner":168238,"flowOther":158250},{"id":"80","name":"SAMARA","party":"UP","votes":122911,"color":"#4979a2","toWinner":0.5170781662242799,"flowWinner":63555,"flowOther":59356},{"id":"16","name":"HERTZ DIAS","party":"PSTU","votes":43103,"color":"#b5546a","toWinner":0.5176660754767631,"flowWinner":22313,"flowOther":20790},{"id":"27","name":"CLARIANA BARAO","party":"DC","votes":40043,"color":"#6f8f58","toWinner":0.5175734720332154,"flowWinner":20725,"flowOther":19318},{"id":"21","name":"EDMILSON COSTA","party":"PCB","votes":22693,"color":"#8b7768","toWinner":0.5177456191397836,"flowWinner":11749,"flowOther":10944},{"id":"35","name":"VETERINÁRIO WILSON GRASSI","party":"DEMOCRATA","votes":16881,"color":"#226d67","toWinner":0.5177320285660032,"flowWinner":8740,"flowOther":8141},{"id":"29","name":"RUI COSTA PIMENTA","party":"PCO","votes":15024,"color":"#c66d43","toWinner":0.5177358618903348,"flowWinner":7778,"flowOther":7246}],"netValidIncrease":4781485,"netIncreaseToWinner":2476101,"netIncreaseToOther":2305384,"crossCandidateModel":{"otherToWinner":8309781,"winnerToOther":5112189},"noCrossSwitchScenario":{"eliminatedVotes":9316747,"winnerFirstVotes":53879538,"otherFirstVotes":56104503,"winnerNetGain":10376694,"otherNetGain":3721538,"availablePool":14098232},"firstRound":{"generated":"2026-10-05T12:51:47","validVotes":119300788,"totalVotes":125275835,"blankVotes":2300798,"nullVotes":3674249,"turnout":125275835,"abstention":33469244,"candidates":[{"id":"22","name":"FLAVIO BOLSONARO","votes":56104503,"share":47.027772356,"elected":false},{"id":"13","name":"LULA","votes":53879538,"share":45.162767911,"elected":false},{"id":"70","name":"ESCRITOR AUGUSTO CURY","votes":3448569,"share":2.890650647,"elected":false},{"id":"14","name":"RENAN SANTOS","votes":2675887,"share":2.242975126,"elected":false},{"id":"55","name":"RONALDO CAIADO","votes":2605148,"share":2.183680463,"elected":false},{"id":"30","name":"ZEMA","votes":326488,"share":0.273667933,"elected":false},{"id":"80","name":"SAMARA","votes":122911,"share":0.103026143,"elected":false},{"id":"16","name":"HERTZ DIAS","votes":43103,"share":0.036129686,"elected":false},{"id":"27","name":"CLARIANA BARAO","votes":40043,"share":0.033564741,"elected":false},{"id":"21","name":"EDMILSON COSTA","votes":22693,"share":0.019021668,"elected":false},{"id":"35","name":"VETERINÁRIO WILSON GRASSI","votes":16881,"share":0.014149948,"elected":false},{"id":"29","name":"RUI COSTA PIMENTA","votes":15024,"share":0.012593379,"elected":false}]},"secondRound":{"generated":"2026-10-25T23:27:02","validVotes":124082273,"totalVotes":128236074,"blankVotes":1430496,"nullVotes":2723305,"turnout":128236074,"abstention":30509005,"candidates":[{"id":"13","name":"LULA","votes":64256232,"share":51.785182884,"elected":true},{"id":"22","name":"FLAVIO BOLSONARO","votes":59826041,"share":48.214817116,"elected":false}]},"areas":[{"id":"ac","name":"Acre","valid1":469066,"valid2":432228,"votes1":{"22":302807,"13":134770,"70":13523,"55":8594,"14":7980,"30":573,"80":314,"27":215,"21":140,"16":71,"29":40,"35":39},"votes2":{"22":287715,"13":144513},"actualWinnerShare":0.33434437380271526,"estimatedWinnerShare":0.38959367922067967},{"id":"al","name":"Alagoas","valid1":1818856,"valid2":1896761,"votes1":{"13":995459,"22":735718,"70":42427,"14":26851,"55":14198,"80":1345,"30":1168,"27":636,"16":431,"21":267,"35":246,"29":110},"votes2":{"13":1152621,"22":744140},"actualWinnerShare":0.6076785636144986,"estimatedWinnerShare":0.579724487596951},{"id":"am","name":"Amazonas","valid1":2170763,"valid2":2121028,"votes1":{"13":1046996,"22":976764,"70":77531,"14":35411,"55":28310,"80":1867,"30":1781,"27":929,"16":457,"35":291,"21":265,"29":161},"votes2":{"13":1145783,"22":975245},"actualWinnerShare":0.5402017323675123,"estimatedWinnerShare":0.5375193430323213},{"id":"ap","name":"Amapá","valid1":464858,"valid2":421642,"votes1":{"13":212503,"22":212278,"70":19057,"14":11342,"55":8304,"80":508,"30":341,"27":229,"16":132,"21":62,"29":53,"35":49},"votes2":{"13":222968,"22":198674},"actualWinnerShare":0.5288087998823646,"estimatedWinnerShare":0.5250377645168901},{"id":"ba","name":"Bahia","valid1":8560291,"valid2":9094019,"votes1":{"13":5664771,"22":2442585,"70":195451,"55":122705,"14":117518,"30":6497,"80":4649,"16":1791,"27":1676,"21":1299,"29":724,"35":625},"votes2":{"13":6485258,"22":2608761},"actualWinnerShare":0.7131344238449469,"estimatedWinnerShare":0.6679622387492894},{"id":"ce","name":"Ceará","valid1":5617814,"valid2":5855602,"votes1":{"13":3555263,"22":1756850,"70":140524,"14":107587,"55":45604,"30":4310,"80":3352,"16":1491,"27":1071,"21":783,"29":498,"35":481},"votes2":{"13":4036124,"22":1819478},"actualWinnerShare":0.689275671399798,"estimatedWinnerShare":0.646710204822875},{"id":"df","name":"Distrito Federal","valid1":1772808,"valid2":1804766,"votes1":{"22":909616,"13":675627,"55":85076,"14":46714,"70":45979,"30":4915,"80":2297,"16":828,"27":716,"29":382,"21":334,"35":324},"votes2":{"22":979542,"13":825224},"actualWinnerShare":0.457247089096315,"estimatedWinnerShare":0.47406648390525674},{"id":"es","name":"Espírito Santo","valid1":2251078,"valid2":2296469,"votes1":{"22":1233194,"13":850028,"70":65121,"14":53236,"55":39097,"30":5873,"80":1973,"27":974,"16":638,"21":388,"35":311,"29":245},"votes2":{"22":1294504,"13":1001965},"actualWinnerShare":0.4363067822818423,"estimatedWinnerShare":0.4606268900780795},{"id":"go","name":"Goiás","valid1":3827823,"valid2":3930889,"votes1":{"22":2051888,"13":1188880,"55":472041,"14":54105,"70":53849,"30":2672,"80":2087,"16":668,"27":559,"21":468,"35":346,"29":260},"votes2":{"22":2345334,"13":1585555},"actualWinnerShare":0.40335786637577403,"estimatedWinnerShare":0.4366977041737007},{"id":"ma","name":"Maranhão","valid1":4010439,"valid2":4038202,"votes1":{"13":2566301,"22":1239040,"70":84830,"14":60387,"55":50155,"30":4584,"80":1795,"16":1459,"27":895,"21":475,"35":307,"29":211},"votes2":{"13":2808231,"22":1229971},"actualWinnerShare":0.6954161777939786,"estimatedWinnerShare":0.6508082458575212},{"id":"mg","name":"Minas Gerais","valid1":11976235,"valid2":12592885,"votes1":{"22":5777548,"13":5188936,"70":409737,"14":247209,"55":230423,"30":98407,"80":11026,"16":4085,"27":3411,"21":2300,"35":1732,"29":1421},"votes2":{"13":6351099,"22":6241786},"actualWinnerShare":0.5043402683340632,"estimatedWinnerShare":0.5063102898008502},{"id":"ms","name":"Mato Grosso do Sul","valid1":1490278,"valid2":1556865,"votes1":{"22":873351,"13":516855,"70":39148,"14":31847,"55":23291,"30":2792,"80":1291,"27":626,"16":353,"21":332,"35":209,"29":183},"votes2":{"22":927892,"13":628973},"actualWinnerShare":0.40399970453443296,"estimatedWinnerShare":0.43466658182116397},{"id":"mt","name":"Mato Grosso","valid1":1993288,"valid2":2045266,"votes1":{"22":1298581,"13":581681,"70":40019,"14":33170,"55":33079,"30":2424,"27":1869,"80":1584,"16":340,"21":239,"35":172,"29":130},"votes2":{"22":1351099,"13":694167},"actualWinnerShare":0.3394018186387492,"estimatedWinnerShare":0.38925151492759114},{"id":"pa","name":"Pará","valid1":4863172,"valid2":4890389,"votes1":{"13":2427237,"22":2163957,"70":125172,"14":84165,"55":51991,"80":3824,"30":3064,"27":1293,"16":1045,"21":674,"35":442,"29":308},"votes2":{"13":2690449,"22":2199940},"actualWinnerShare":0.5501503050166356,"estimatedWinnerShare":0.5459776397993013},{"id":"pb","name":"Paraíba","valid1":2513747,"valid2":2659269,"votes1":{"13":1541127,"22":831377,"70":73831,"14":42247,"55":19511,"30":1988,"80":1593,"16":627,"27":604,"21":347,"29":274,"35":221},"votes2":{"13":1794059,"22":865210},"actualWinnerShare":0.6746436708734619,"estimatedWinnerShare":0.6324058061093155},{"id":"pe","name":"Pernambuco","valid1":5601017,"valid2":5950067,"votes1":{"13":3553971,"22":1738043,"70":137960,"14":85865,"55":73176,"30":6060,"80":2387,"16":1114,"27":869,"21":705,"35":457,"29":410},"votes2":{"13":4117513,"22":1832554},"actualWinnerShare":0.6920111992016225,"estimatedWinnerShare":0.6481831130454974},{"id":"pi","name":"Piauí","valid1":2146394,"valid2":2179848,"votes1":{"13":1523710,"22":517028,"70":47692,"14":32274,"55":21629,"30":1357,"80":1099,"27":504,"16":443,"21":319,"35":193,"29":146},"votes2":{"13":1653989,"22":525859},"actualWinnerShare":0.7587634550665918,"estimatedWinnerShare":0.7031335669583179},{"id":"pr","name":"Paraná","valid1":6585243,"valid2":6857948,"votes1":{"22":3945345,"13":2054597,"70":205095,"14":177434,"55":171294,"30":17172,"80":6731,"27":2445,"16":2056,"21":1195,"35":962,"29":917},"votes2":{"22":4291444,"13":2566504},"actualWinnerShare":0.3742378915675651,"estimatedWinnerShare":0.4159867742709191},{"id":"rj","name":"Rio de Janeiro","valid1":9369700,"valid2":9734426,"votes1":{"22":4966844,"13":3693021,"70":247397,"14":211843,"55":199844,"30":21907,"80":14186,"27":4082,"16":3999,"21":2854,"35":1930,"29":1793},"votes2":{"22":5169033,"13":4565393},"actualWinnerShare":0.4689945765677401,"estimatedWinnerShare":0.47351979075855655},{"id":"rn","name":"Rio Grande do Norte","valid1":2071898,"valid2":2151005,"votes1":{"13":1237963,"22":720493,"70":57367,"14":35261,"55":16407,"30":1525,"80":1228,"16":572,"27":405,"21":315,"35":185,"29":177},"votes2":{"13":1413596,"22":737409},"actualWinnerShare":0.657179318504606,"estimatedWinnerShare":0.6200873813428314},{"id":"ro","name":"Rondônia","valid1":968059,"valid2":968828,"votes1":{"22":652988,"13":250667,"70":25280,"14":19187,"55":16929,"30":1318,"80":843,"27":356,"16":174,"21":160,"35":97,"29":60},"votes2":{"22":674382,"13":294446},"actualWinnerShare":0.3039197876196807,"estimatedWinnerShare":0.36788963560120574},{"id":"rr","name":"Roraima","valid1":325545,"valid2":303180,"votes1":{"22":231322,"13":74420,"70":8579,"14":6623,"55":3639,"30":337,"80":280,"27":168,"16":60,"21":42,"35":41,"29":34},"votes2":{"22":219675,"13":83505},"actualWinnerShare":0.27543043736394224,"estimatedWinnerShare":0.3429625652877841},{"id":"rs","name":"Rio Grande do Sul","valid1":6423046,"valid2":6698930,"votes1":{"22":3573783,"13":2294759,"70":195296,"14":167558,"55":158821,"30":18988,"80":6632,"16":2146,"27":2066,"29":1043,"21":1031,"35":923},"votes2":{"22":3874378,"13":2824552},"actualWinnerShare":0.42164226227173596,"estimatedWinnerShare":0.4493589348234932},{"id":"sc","name":"Santa Catarina","valid1":4500897,"valid2":4638385,"votes1":{"22":3000020,"13":1127168,"70":134273,"14":132795,"55":79911,"30":16718,"80":5049,"16":1503,"27":1429,"21":828,"29":643,"35":560},"votes2":{"22":3220071,"13":1418314},"actualWinnerShare":0.3057775497290544,"estimatedWinnerShare":0.367387838248464},{"id":"se","name":"Sergipe","valid1":1364196,"valid2":1422395,"votes1":{"13":856019,"22":417839,"70":38895,"55":26651,"14":21405,"30":1158,"80":991,"27":457,"16":331,"21":204,"35":138,"29":108},"votes2":{"13":989041,"22":433354},"actualWinnerShare":0.6953349807894431,"estimatedWinnerShare":0.6467595107406428},{"id":"sp","name":"São Paulo","valid1":24882948,"valid2":26258452,"votes1":{"22":12922023,"13":9505413,"70":892368,"14":804310,"55":579571,"30":94635,"80":42532,"16":15815,"27":10563,"21":6129,"35":5160,"29":4429},"votes2":{"22":14139178,"13":12119274},"actualWinnerShare":0.4615380221195065,"estimatedWinnerShare":0.47256512726833794},{"id":"to","name":"Tocantins","valid1":930447,"valid2":910878,"votes1":{"22":469321,"13":404009,"70":22434,"55":20189,"14":12983,"30":595,"80":395,"27":171,"21":117,"16":101,"35":67,"29":65},"votes2":{"22":467916,"13":442962},"actualWinnerShare":0.4863022270820022,"estimatedWinnerShare":0.4986595342598596},{"id":"zz","name":"Exterior","valid1":330882,"valid2":371651,"votes1":{"13":157387,"22":143900,"70":9734,"14":8580,"55":4708,"30":3329,"80":1053,"27":825,"21":421,"16":373,"35":373,"29":199},"votes2":{"13":200154,"22":171497},"actualWinnerShare":0.5385536430683625,"estimatedWinnerShare":0.54037171144956}],"model":{"weightedRmsePp":3.183636621271312,"weightedR2":0.933247319075028,"areaCount":28,"penalty":0.01},"sources":{"first":"https://resultados.tse.jus.br/oficial/ele2026/6257/dados/br/br-c0001-e006257-u.json","second":"https://resultados.tse.jus.br/oficial/ele2026/6258/dados/br/br-c0001-e006258-u.json"}};
+const TEXT = {
+ es:{
+  eyebrow:"ANÁLISIS ELECTORAL · BRASIL 2026",header:"Estimación de flujos entre vueltas",
+  title:"¿Cómo podrían haberse repartido los votos de los candidatos eliminados?",
+  intro:"Una estimación estadística a partir de resultados oficiales por estado. Los datos agregados no permiten observar ni demostrar cómo votó cada persona.",
+  badge:"ESTIMACIÓN ECOLÓGICA · NO ES UN CONTEO INDIVIDUAL",
+  graphTitle:"Flujos estimados desde los candidatos eliminados",
+  graphSub:"El grosor representa la asignación modelada de los votos válidos de primera vuelta de cada candidatura eliminada. No son transferencias observadas.",
+  graphNote:"Solo se muestran las candidaturas que no pasaron a segunda vuelta. Los dos bloques de destino suman asignaciones estimadas de esos votos; no representan el total oficial obtenido por los finalistas.",
+  tableTitle:"Detalle de los votos de primera vuelta",tableSub:"Porcentaje estimado de cada grupo que habría votado por cada finalista, con el tamaño del grupo oficial de primera vuelta.",
+  colCandidate:"Candidatura eliminada (1.ª vuelta)",colVotes:"Votos 1.ª vuelta",colWinner:"Estimado a",colOther:"Estimado a",colFlow:"Reparto estimado",
+  fitTitle:"Comprobación del modelo por estado",fitSub:"Compara el porcentaje oficial de la candidatura ganadora en segunda vuelta con el valor que predice el modelo a partir de las mezclas de voto de la primera vuelta.",
+  modelError:"Error cuadrático medio ponderado",modelR2:"R² ponderado",modelAreas:"Unidades geográficas usadas",
+  colArea:"Estado / exterior",colActual:"Resultado oficial 2.ª vuelta",colPred:"Predicción del modelo",colResidual:"Diferencia",
+  methodTitle:"Método y límites",
+  methodBody:"<strong>Modelo:</strong> regresión ecológica lineal con restricciones (cada coeficiente entre 0 % y 100 %), ajustada sobre la proporción de votos de primera vuelta por candidatura en cada una de las 27 UFs y el exterior. Se pondera por votos válidos de segunda vuelta y se aplica una regularización leve hacia el resultado nacional para reducir inestabilidad. La proporción estimada de cada candidatura eliminada se multiplica por sus votos nacionales de primera vuelta para dibujar los flujos.<br><br><strong>Interpretación:</strong> es una asociación entre patrones geográficos, no un seguimiento de electores. El modelo no puede identificar cambios individuales, abstención, votos blancos/nulos, nuevos votantes ni cambios dentro de los estados. Las asignaciones no son conteos oficiales ni una encuesta; no deben presentarse como hechos observados.",
+  sourceLabel:"Fuentes oficiales:",generated:"Datos consultados desde los archivos públicos del TSE.",
+  aiDisclaimer:"Aviso de IA: el modelo y la presentación se prepararon con asistencia de IA. Las estimaciones pueden contener errores; compruebe los resultados y el método en las fuentes oficiales.",
+  firstRound:"Vuelta 1 · votos válidos",secondRound:"Vuelta 2 · votos válidos",winnerResult:"Votos oficiales de la candidatura ganadora",otherResult:"Votos oficiales de la otra candidatura",
+  estimated:"Estimación modelada",to:"A",of:"de",official:"oficial",estimate:"estimado",flowSummary:"asignados por el modelo",
+  graphDescription:"Diagrama de flujos modelados desde los votos de candidaturas eliminadas en la primera vuelta hacia las dos candidaturas de segunda vuelta.",
+  scenarioTitle:"Ajustar porcentajes para probar escenarios",
+  scenarioSub:"Cambia qué porcentaje de cada grupo de votos válidos de la primera vuelta se asigna a Lula. El porcentaje restante se asigna automáticamente a Flávio; el gráfico y los resultados se recalculan al instante.",
+  scenarioColumn:"Porcentaje hacia Lula (el resto irá a Flávio)",
+  scenarioReset:"Restaurar estimación del modelo",
+  scenarioVotes:"votos de primera vuelta",
+  scenarioAria:"Porcentaje de este grupo asignado a",
+  scenarioNote:"Los valores iniciales reproducen el modelo calibrado. Los controles modifican el Sankey completo de abajo; el gráfico de candidaturas eliminadas de arriba permanece como referencia del modelo. El aumento neto es una diferencia entre totales, no un grupo observado de votantes. Los escenarios no son predicciones ni evidencia de cambios individuales.",
+  scenarioWinnerResult:"Votos del escenario hacia",
+  scenarioOtherResult:"Votos del escenario hacia",
+  scenarioWinnerDifference:"Diferencia frente al resultado oficial de",
+  scenarioOtherDifference:"Diferencia frente al resultado oficial de",
+  scaleGraphTitle:"Todos los votos válidos: primera vuelta frente a segunda vuelta",
+  scaleGraphSub:"Compara el volumen de votos válidos en ambas vueltas. Los controles permiten cambiar el reparto supuesto de cada grupo entre los dos finalistas; los destinos muestran el total resultante del escenario y lo comparan con el resultado oficial.",
+  scaleGraphNote:"El grosor está en escala común: cada flujo se mide en votos. El aumento neto es una diferencia entre totales, no un recuento de personas nuevas. Las asignaciones son parámetros de escenario, no transferencias observadas ni predicciones.",
+  scaleGraphDescription:"Sankey de escenario con todos los votos válidos: los votos de primera vuelta y el aumento neto se distribuyen entre los dos finalistas según los porcentajes ajustables.",
+  scaleSecond:"Resultado del escenario",scaleIncrease:"Aumento neto de votos válidos",
+  modeledGroup:"grupo del escenario"
+  ,switchTitle:"¿Hubo cambios entre Lula y Flávio?",
+  switchSub:"El modelo ecológico puede sugerir cambios entre grupos; los resultados agregados no revelan cambios individuales.",
+  modelSwitchTitle:"Lo que estima el modelo estatal",
+  noSwitchTitle:"Un escenario sin cambios entre finalistas también cuadra",
+  modelSwitchText:"El modelo asigna <strong>{{otherToWinner}}</strong> votos del primer turno de Flávio a Lula ({{otherToWinnerPct}} del voto inicial de Flávio), y <strong>{{winnerToOther}}</strong> votos de Lula a Flávio. Son inferencias ecológicas basadas en patrones por estado, no personas rastreadas ni transferencias comprobadas.",
+  noSwitchText:"Si los votos iniciales de ambos finalistas se mantienen con su candidato, los <strong>{{eliminated}}</strong> votos de candidaturas eliminadas más el aumento neto de <strong>{{increase}}</strong> votos válidos suman <strong>{{available}}</strong>: exactamente las ganancias combinadas de Lula ({{winnerGain}}) y Flávio ({{otherGain}}). Es una posibilidad aritmética, no evidencia de lo que hicieron los votantes.",
+  voterCaution:"El aumento neto de votos válidos no equivale necesariamente a personas nuevas: puede haber entradas y salidas, abstención y cambios desde votos blancos o nulos."
+ },
+ en:{
+  eyebrow:"ELECTION ANALYSIS · BRAZIL 2026",header:"Estimated flows between rounds",
+  title:"How might first-round votes for eliminated candidates have split?",
+  intro:"A statistical estimate based on official state-level results. Aggregate data cannot show or prove how any individual voted.",
+  badge:"ECOLOGICAL ESTIMATE · NOT AN INDIVIDUAL COUNT",
+  graphTitle:"Estimated flows from eliminated candidates",
+  graphSub:"Width represents the model's allocation of each eliminated candidate's valid first-round votes. These are not observed transfers.",
+  graphNote:"Only candidates who did not advance are shown. The two destination blocks sum estimated allocations from those ballots; they are not the finalists' official totals.",
+  tableTitle:"First-round vote detail",tableSub:"Estimated share of each group assigned to each finalist, alongside its official first-round size.",
+  colCandidate:"Eliminated candidate (round 1)",colVotes:"Round 1 votes",colWinner:"Estimated to",colOther:"Estimated to",colFlow:"Estimated split",
+  fitTitle:"Model check by state",fitSub:"Compares the official second-round share for the winner with the model's prediction from first-round vote mixes.",
+  modelError:"Weighted root mean squared error",modelR2:"Weighted R²",modelAreas:"Geographic units used",
+  colArea:"State / abroad",colActual:"Official round 2 result",colPred:"Model prediction",colResidual:"Difference",
+  methodTitle:"Method and limitations",
+  methodBody:"<strong>Model:</strong> constrained linear ecological regression (each coefficient between 0% and 100%), fitted to first-round candidate vote shares in each of Brazil's 27 states plus abroad. It is weighted by second-round valid votes and mildly regularized toward the national result to reduce instability. The estimated share for each eliminated candidate is multiplied by that candidate's national first-round votes to draw the flows.<br><br><strong>Interpretation:</strong> this is an association between geographic patterns, not voter tracking. The model cannot identify individual changes, abstention, blank/null votes, new voters, or within-state variation. Allocations are neither official counts nor a poll and must not be presented as observed facts.",
+  sourceLabel:"Official sources:",generated:"Data retrieved from the TSE public files.",
+  aiDisclaimer:"AI disclaimer: the model and presentation were prepared with AI assistance. Estimates may be wrong; verify the results and method against the official sources.",
+  firstRound:"Round 1 · valid votes",secondRound:"Round 2 · valid votes",winnerResult:"Official votes for the winning candidate",otherResult:"Official votes for the other candidate",
+  estimated:"Model estimate",to:"To",of:"of",official:"official",estimate:"estimated",flowSummary:"allocated by the model",
+  graphDescription:"Diagram of model-estimated flows from eliminated first-round candidates to the two runoff candidates.",
+  scenarioTitle:"Adjust transfer percentages to test scenarios",
+  scenarioSub:"Change the share of each first-round valid-vote group assigned to Lula. The remainder is automatically assigned to Flávio; the chart and totals update instantly.",
+  scenarioColumn:"Share to Lula (the remainder goes to Flávio)",
+  scenarioReset:"Restore model estimates",
+  scenarioVotes:"first-round votes",
+  scenarioAria:"Share of this group assigned to",
+  scenarioNote:"The initial values reproduce the calibrated model. These controls affect the full Sankey below; the eliminated-candidates chart above remains the model reference. The net increase is a difference between totals, not an observed group of voters. Scenarios are not predictions or evidence of individual switching.",
+  scenarioWinnerResult:"Scenario votes to",
+  scenarioOtherResult:"Scenario votes to",
+  scenarioWinnerDifference:"Difference from official result for",
+  scenarioOtherDifference:"Difference from official result for",
+  scaleGraphTitle:"All valid votes: first round compared with runoff",
+  scaleGraphSub:"Compares valid-vote volume across rounds. Adjust the assumed split of each group between the finalists; destinations show scenario totals alongside the official result.",
+  scaleGraphNote:"All flows use the same scale: each width represents votes. The net increase is a difference between totals, not a count of new people. Allocations are scenario inputs, not observed transfers or predictions.",
+  scaleGraphDescription:"Scenario Sankey of all valid votes: first-round votes and the net increase are split between the finalists using adjustable percentages.",
+  scaleSecond:"Scenario result",scaleIncrease:"Net increase in valid votes",
+  modeledGroup:"scenario group"
+  ,switchTitle:"Did voters switch between Lula and Flávio?",
+  switchSub:"The ecological model can suggest group-level flows; aggregate results cannot reveal individual voter changes.",
+  modelSwitchTitle:"What the state-level model estimates",
+  noSwitchTitle:"A no-switch scenario also fits the totals",
+  modelSwitchText:"The model allocates <strong>{{otherToWinner}}</strong> first-round Flávio votes to Lula ({{otherToWinnerPct}} of Flávio's initial vote), and <strong>{{winnerToOther}}</strong> Lula votes to Flávio. These are ecological inferences from state patterns—not tracked people or verified transfers.",
+  noSwitchText:"If both finalists' first-round votes stay with their candidate, the <strong>{{eliminated}}</strong> votes for eliminated candidates plus the net increase of <strong>{{increase}}</strong> valid votes total <strong>{{available}}</strong>—exactly the combined gains by Lula ({{winnerGain}}) and Flávio ({{otherGain}}). This is arithmetically possible, not evidence of what voters did.",
+  voterCaution:"The net increase in valid votes is not necessarily the number of new voters: there can be entries and exits, abstention, and changes from blank or null votes."
+ },
+ de:{
+  eyebrow:"WAHLANALYSE · BRASILIEN 2026",header:"Geschätzte Stimmenflüsse zwischen den Wahlgängen",
+  title:"Wie könnten sich die Stimmen für ausgeschiedene Kandidaten verteilt haben?",
+  intro:"Eine statistische Schätzung auf Grundlage amtlicher Ergebnisse nach Bundesstaat. Aggregierte Daten zeigen oder beweisen nicht, wie eine einzelne Person gewählt hat.",
+  badge:"ÖKOLOGISCHE SCHÄTZUNG · KEINE INDIVIDUELLE AUSZÄHLUNG",
+  graphTitle:"Geschätzte Flüsse von ausgeschiedenen Kandidaten",
+  graphSub:"Die Breite zeigt die modellierte Verteilung der gültigen Stimmen aus dem ersten Wahlgang für ausgeschiedene Kandidaten. Es sind keine beobachteten Wechsel.",
+  graphNote:"Angezeigt werden nur Kandidaten, die nicht in die Stichwahl kamen. Die beiden Zielblöcke umfassen die geschätzten Zuteilungen dieser Stimmen, nicht die amtlichen Gesamtergebnisse der Finalisten.",
+  tableTitle:"Details der Stimmen im ersten Wahlgang",tableSub:"Geschätzter Anteil jeder Gruppe für jeden Finalisten sowie die amtliche Gruppengröße im ersten Wahlgang.",
+  colCandidate:"Ausgeschiedener Kandidat (1. Wahlgang)",colVotes:"Stimmen 1. Wahlgang",colWinner:"Geschätzt für",colOther:"Geschätzt für",colFlow:"Geschätzte Aufteilung",
+  fitTitle:"Modellprüfung nach Bundesstaat",fitSub:"Vergleicht den amtlichen Stimmenanteil des Siegers im zweiten Wahlgang mit der Modellprognose aus den Stimmenmustern des ersten Wahlgangs.",
+  modelError:"Gewichteter quadratischer Mittelfehler",modelR2:"Gewichtetes R²",modelAreas:"Verwendete geografische Einheiten",
+  colArea:"Bundesstaat / Ausland",colActual:"Amtliches Ergebnis 2. Wahlgang",colPred:"Modellprognose",colResidual:"Abweichung",
+  methodTitle:"Methode und Grenzen",
+  methodBody:"<strong>Modell:</strong> beschränkte lineare ökologische Regression (jeder Koeffizient zwischen 0 % und 100 %), angepasst an die Stimmenanteile der Kandidaten im ersten Wahlgang in den 27 Bundesstaaten Brasiliens und im Ausland. Gewichtet nach gültigen Stimmen des zweiten Wahlgangs und leicht zum nationalen Ergebnis regularisiert, um Instabilität zu mindern. Der geschätzte Anteil jeder ausgeschiedenen Kandidatur wird mit deren nationalen Stimmen im ersten Wahlgang multipliziert, um die Flüsse darzustellen.<br><br><strong>Interpretation:</strong> Dies ist ein Zusammenhang zwischen geografischen Mustern, keine Nachverfolgung von Wählern. Das Modell kann individuelle Wechsel, Nichtwahl, ungültige/leere Stimmen, neue Wähler oder Unterschiede innerhalb der Bundesstaaten nicht bestimmen. Die Zuteilungen sind weder amtliche Zählungen noch eine Umfrage und dürfen nicht als beobachtete Tatsachen dargestellt werden.",
+  sourceLabel:"Amtliche Quellen:",generated:"Daten aus öffentlichen TSE-Dateien abgerufen.",
+  aiDisclaimer:"KI-Hinweis: Modell und Darstellung wurden mit KI-Unterstützung erstellt. Schätzungen können fehlerhaft sein; überprüfen Sie Ergebnisse und Methode anhand der amtlichen Quellen.",
+  firstRound:"1. Wahlgang · gültige Stimmen",secondRound:"2. Wahlgang · gültige Stimmen",winnerResult:"Amtliche Stimmen für den gewählten Kandidaten",otherResult:"Amtliche Stimmen für den anderen Kandidaten",
+  estimated:"Modellschätzung",to:"Für",of:"von",official:"amtlich",estimate:"geschätzt",flowSummary:"vom Modell zugeordnet",
+  graphDescription:"Diagramm geschätzter Modellflüsse von ausgeschiedenen Kandidaten des ersten Wahlgangs zu den beiden Kandidaten der Stichwahl.",
+  scenarioTitle:"Transferanteile anpassen und Szenarien testen",
+  scenarioSub:"Ändern Sie den Anteil jeder gültigen Erstwahl-Stimmengruppe, der Lula zugeordnet wird. Der Rest wird automatisch Flávio zugeordnet; Diagramm und Summen werden sofort aktualisiert.",
+  scenarioColumn:"Anteil für Lula (der Rest entfällt auf Flávio)",
+  scenarioReset:"Modellschätzung wiederherstellen",
+  scenarioVotes:"Stimmen im ersten Wahlgang",
+  scenarioAria:"Anteil dieser Gruppe, der zugeordnet wird an",
+  scenarioNote:"Die Ausgangswerte bilden das kalibrierte Modell ab. Diese Regler ändern das vollständige Sankey-Diagramm darunter; das Diagramm der ausgeschiedenen Kandidaten oben bleibt die Modellreferenz. Der Nettozuwachs ist eine Differenz zwischen Summen, keine beobachtete Wählergruppe. Szenarien sind weder Vorhersagen noch Belege für individuelles Wechselverhalten.",
+  scenarioWinnerResult:"Szenariostimmen für",
+  scenarioOtherResult:"Szenariostimmen für",
+  scenarioWinnerDifference:"Abweichung vom amtlichen Ergebnis für",
+  scenarioOtherDifference:"Abweichung vom amtlichen Ergebnis für",
+  scaleGraphTitle:"Alle gültigen Stimmen: erster Wahlgang im Vergleich zur Stichwahl",
+  scaleGraphSub:"Vergleicht die gültigen Stimmen beider Wahlgänge. Passen Sie die angenommene Aufteilung jeder Gruppe zwischen den Finalisten an; die Zielwerte zeigen das Szenario und den Vergleich mit dem amtlichen Ergebnis.",
+  scaleGraphNote:"Alle Flüsse verwenden denselben Maßstab: Jede Breite steht für Stimmen. Der Nettozuwachs ist eine Differenz zwischen Summen, keine Zahl neuer Personen. Die Zuteilungen sind Szenariowerte, keine beobachteten Wechsel oder Vorhersagen.",
+  scaleGraphDescription:"Szenario-Sankey aller gültigen Stimmen: Stimmen des ersten Wahlgangs und der Nettozuwachs werden anhand anpassbarer Prozentsätze auf die beiden Finalisten verteilt.",
+  scaleSecond:"Szenarioergebnis",scaleIncrease:"Nettozuwachs gültiger Stimmen",
+  modeledGroup:"Szenariogruppe"
+  ,switchTitle:"Wechselten Wähler zwischen Lula und Flávio?",
+  switchSub:"Das ökologische Modell kann Gruppenflüsse schätzen; aggregierte Ergebnisse zeigen keine individuellen Wahlentscheidungen.",
+  modelSwitchTitle:"Schätzung des Modells nach Bundesstaat",
+  noSwitchTitle:"Auch ein Szenario ohne Wechsel zwischen Finalisten passt",
+  modelSwitchText:"Das Modell ordnet <strong>{{otherToWinner}}</strong> Stimmen von Flávio aus dem ersten Wahlgang Lula zu ({{otherToWinnerPct}} von Flávios ursprünglichen Stimmen) und <strong>{{winnerToOther}}</strong> Stimmen von Lula Flávio. Dies sind ökologische Schlüsse aus regionalen Mustern—keine nachverfolgten Personen oder bestätigten Wechsel.",
+  noSwitchText:"Wenn die Stimmen beider Finalisten aus dem ersten Wahlgang bei ihrem Kandidaten bleiben, ergeben die <strong>{{eliminated}}</strong> Stimmen für ausgeschiedene Kandidaten plus der Nettozuwachs von <strong>{{increase}}</strong> gültigen Stimmen insgesamt <strong>{{available}}</strong>—genau die zusammengezählten Zuwächse von Lula ({{winnerGain}}) und Flávio ({{otherGain}}). Das ist rechnerisch möglich, aber kein Beleg für tatsächliches Wählerverhalten.",
+  voterCaution:"Der Nettozuwachs gültiger Stimmen entspricht nicht zwingend der Zahl neuer Wähler: Es kann Zu- und Abgänge, Wahlenthaltung sowie Änderungen bei ungültigen oder leeren Stimmen geben."
+ }
+};
+const fmt = n => new Intl.NumberFormat(document.documentElement.lang === "de" ? "de-DE" : document.documentElement.lang === "en" ? "en-US" : "es-ES").format(n);
+const pct = n => new Intl.NumberFormat(document.documentElement.lang === "de" ? "de-DE" : document.documentElement.lang === "en" ? "en-US" : "es-ES",{style:"percent",maximumFractionDigits:1}).format(n);
+const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const scenarioShares = new Map([
+ ...D.scaleCandidates.map(c=>[c.id,c.flowWinner/c.votes]),
+ ["net-increase",D.netValidIncrease?D.netIncreaseToWinner/D.netValidIncrease:D.secondRound.candidates.find(c=>c.id===D.winner.id).share/100]
+]);
+const scenarioPercent = n => new Intl.NumberFormat(document.documentElement.lang === "de" ? "de-DE" : document.documentElement.lang === "en" ? "en-US" : "es-ES",{style:"percent",minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
+function renderScenarioControls(lang){
+ const t=TEXT[lang], items=[...D.scaleCandidates].sort((a,b)=>b.votes-a.votes);
+ items.push({id:"net-increase",name:t.scaleIncrease,votes:D.netValidIncrease});
+ document.getElementById("transferControls").innerHTML=items.map(item=>{
+  const share=scenarioShares.get(item.id), percentage=Number((share*100).toFixed(4));
+  const aria=`${t.scenarioAria} ${D.winner.name}`;
+  return `<div class="scenario-row" data-scenario-id="${esc(item.id)}">
+   <div class="scenario-label"><strong>${esc(item.name)}</strong><small>${fmt(item.votes)} ${t.scenarioVotes}</small></div>
+   <div class="scenario-control"><div class="scenario-inputs">
+    <input class="scenario-range" type="range" min="0" max="100" step="0.01" value="${percentage}" aria-label="${esc(aria)} ${esc(item.name)}">
+    <input class="scenario-number" type="number" min="0" max="100" step="0.01" value="${percentage}" aria-label="${esc(aria)} ${esc(item.name)}">
+   </div><span class="scenario-split">${scenarioPercent(share)} ${esc(D.winner.name)} · ${scenarioPercent(1-share)} ${esc(D.other.name)}</span></div>
+  </div>`;
+ }).join("");
+ document.querySelectorAll(".scenario-row").forEach(row=>{
+  const id=row.dataset.scenarioId, range=row.querySelector(".scenario-range"), number=row.querySelector(".scenario-number");
+  range.addEventListener("input",()=>updateScenarioShare(row,id,range.value,lang));
+  number.addEventListener("change",()=>updateScenarioShare(row,id,number.value,lang));
+ });
+ document.getElementById("resetScenario").onclick=()=>{
+  for(const candidate of D.scaleCandidates) scenarioShares.set(candidate.id,candidate.flowWinner/candidate.votes);
+  scenarioShares.set("net-increase",D.netValidIncrease?D.netIncreaseToWinner/D.netValidIncrease:D.secondRound.candidates.find(c=>c.id===D.winner.id).share/100);
+  renderScenarioControls(document.documentElement.lang);
+  drawScaleGraph(document.documentElement.lang);
+ };
+}
+function updateScenarioShare(row,id,value,lang){
+ const percentage=Number(value);
+ if(value.trim()===""||!Number.isFinite(percentage)){
+  const current=scenarioShares.get(id)*100;
+  row.querySelector(".scenario-range").value=String(current);
+  row.querySelector(".scenario-number").value=current.toFixed(4);
+  return;
+ }
+ const bounded=Math.min(100,Math.max(0,percentage));
+ const share=bounded/100;
+ scenarioShares.set(id,share);
+ row.querySelector(".scenario-range").value=String(bounded);
+ row.querySelector(".scenario-number").value=bounded.toFixed(4);
+ row.querySelector(".scenario-split").textContent=`${scenarioPercent(share)} ${D.winner.name} · ${scenarioPercent(1-share)} ${D.other.name}`;
+ drawScaleGraph(lang);
+}
+function render(lang){
+ document.documentElement.lang=lang;
+ document.querySelectorAll("[data-i]").forEach(el=>el.innerHTML=TEXT[lang][el.dataset.i]);
+ document.querySelectorAll("[data-lang]").forEach(b=>b.classList.toggle("active",b.dataset.lang===lang));
+ const t=TEXT[lang], winner=D.winner, other=D.other;
+ const candidate=(id,round)=>round.candidates.find(c=>c.id===id);
+ const w1=candidate(winner.id,D.firstRound), w2=candidate(winner.id,D.secondRound), o2=candidate(other.id,D.secondRound);
+ document.getElementById("summary").innerHTML=[
+  [t.firstRound,fmt(D.firstRound.validVotes),`${D.firstRound.candidates.length} ${lang==="es"?"candidaturas":lang==="de"?"Kandidaturen":"candidates"}`],
+  [t.secondRound,fmt(D.secondRound.validVotes),`${D.areas.length} ${lang==="es"?"unidades geográficas":lang==="de"?"geografische Einheiten":"geographic units"}`],
+  [t.winnerResult,fmt(w2.votes),`${esc(winner.name)} · ${pct(w2.share/100)}`],
+  [t.otherResult,fmt(o2.votes),`${esc(other.name)} · ${pct(o2.share/100)}`]
+ ].map(c=>`<article class="card"><div class="label">${c[0]}</div><div class="value">${c[1]}</div><div class="sub">${c[2]}</div></article>`).join("");
+ const scenario=D.noCrossSwitchScenario;
+ const firstOther=candidate(other.id,D.firstRound);
+ const modelValues={
+  otherToWinner:fmt(D.crossCandidateModel.otherToWinner),
+  otherToWinnerPct:pct(D.crossCandidateModel.otherToWinner/firstOther.votes),
+  winnerToOther:fmt(D.crossCandidateModel.winnerToOther),
+  eliminated:fmt(scenario.eliminatedVotes),
+  increase:fmt(D.netValidIncrease),
+  available:fmt(scenario.availablePool),
+  winnerGain:fmt(scenario.winnerNetGain),
+  otherGain:fmt(scenario.otherNetGain)
+ };
+ const fill=(template)=>template.replace(/\{\{(\w+)\}\}/g,(_,key)=>modelValues[key]??"");
+ document.getElementById("switchScenarios").innerHTML=`
+  <div class="modelbox"><strong>${t.modelSwitchTitle}</strong><p>${fill(t.modelSwitchText)}</p></div>
+  <div class="modelbox"><strong>${t.noSwitchTitle}</strong><p>${fill(t.noSwitchText)}</p></div>
+  <p class="method" style="grid-column:1/-1">${t.voterCaution}</p>`;
+ document.getElementById("flowHead").innerHTML=`<tr><th>${t.colCandidate}</th><th class="numeric">${t.colVotes}</th><th class="numeric">${t.colWinner} ${esc(winner.name)}</th><th class="numeric">${t.colOther} ${esc(other.name)}</th><th class="numeric">${t.colFlow}</th></tr>`;
+ document.getElementById("flowRows").innerHTML=D.candidates.map(c=>`<tr><td><span class="candidate"><i class="dot" style="background:${c.color}"></i><span>${esc(c.name)} <span class="subtle">(${esc(c.party)})</span></span></span></td><td class="numeric">${fmt(c.votes)}</td><td class="numeric"><span class="rate">${pct(c.toWinner)}</span><br><span class="subtle">${fmt(c.flowWinner)}</span></td><td class="numeric"><span class="rate">${pct(c.toOther)}</span><br><span class="subtle">${fmt(c.flowOther)}</span></td><td class="numeric">${pct(c.votes/D.firstRound.validVotes)}</td></tr>`).join("");
+ const rmse=new Intl.NumberFormat(lang==="de"?"de-DE":lang==="en"?"en-US":"es-ES",{maximumFractionDigits:2}).format(D.model.weightedRmsePp)+" pp";
+ const r2=D.model.weightedR2===null?"—":new Intl.NumberFormat(lang==="de"?"de-DE":lang==="en"?"en-US":"es-ES",{style:"percent",maximumFractionDigits:1}).format(D.model.weightedR2);
+ document.getElementById("modelSummary").innerHTML=`<div class="modelbox"><strong>${rmse}</strong><small>${t.modelError}</small></div><div class="modelbox"><strong>${r2}</strong><small>${t.modelR2}</small></div><div class="modelbox"><strong>${D.model.areaCount}</strong><small>${t.modelAreas}</small></div>`;
+ document.getElementById("areaHead").innerHTML=`<tr><th>${t.colArea}</th><th class="numeric">${t.colActual} · ${esc(winner.name)}</th><th class="numeric">${t.colPred}</th><th class="numeric">${t.colResidual}</th></tr>`;
+ document.getElementById("areaRows").innerHTML=D.areas.map(a=>`<tr><td>${esc(a.name)}</td><td class="numeric">${pct(a.actualWinnerShare)}</td><td class="numeric">${pct(a.estimatedWinnerShare)}</td><td class="numeric">${(a.actualWinnerShare>=a.estimatedWinnerShare?"+":"")+new Intl.NumberFormat(lang==="de"?"de-DE":lang==="en"?"en-US":"es-ES",{maximumFractionDigits:2}).format((a.actualWinnerShare-a.estimatedWinnerShare)*100)} pp</td></tr>`).join("");
+ drawGraph(lang);
+ renderScenarioControls(lang);
+ drawScaleGraph(lang);
+ document.getElementById("source1").href=D.sources.first;document.getElementById("source2").href=D.sources.second;
+ document.getElementById("generated").textContent=`${t.generated} ${new Date(D.generatedAt).toLocaleString(lang==="de"?"de-DE":lang==="en"?"en-US":"es-ES")}.`;
+}
+function drawGraph(lang){
+ const svg=document.getElementById("flowGraph"), candidates=D.candidates, W=1000, H=Math.max(430,candidates.length*58+40), gap=15, top=22;
+ const total=candidates.reduce((s,c)=>s+c.flowWinner+c.flowOther,0)||1, scale=(H-2*top-gap*Math.max(0,candidates.length-1))/total;
+ const sourceX=55, sourceW=15, targetX=720, targetW=18, startX=sourceX+sourceW, endX=targetX;
+ const sources=[];let y=top;
+ for(const c of candidates){const h=(c.flowWinner+c.flowOther)*scale;sources.push({c,y,h});y+=h+gap;}
+ const sumWinner=candidates.reduce((s,c)=>s+c.flowWinner,0),sumOther=candidates.reduce((s,c)=>s+c.flowOther,0);
+ const winH=sumWinner*scale,otherH=sumOther*scale;
+ let winStart=top, otherStart=top+winH;
+ const pieces=[];
+ for(const s of sources){
+  const hA=s.c.flowWinner*scale,hB=s.c.flowOther*scale;
+  const sourceMidA=s.y+hA/2,sourceMidB=s.y+hA+hB/2;
+  const targetMidA=winStart+hA/2,targetMidB=otherStart+hB/2;
+  const curve=(y1,y2,h)=>`M ${startX} ${y1-h/2} C ${startX+170} ${y1-h/2}, ${endX-170} ${y2-h/2}, ${endX} ${y2-h/2} L ${endX} ${y2+h/2} C ${endX-170} ${y2+h/2}, ${startX+170} ${y1+h/2}, ${startX} ${y1+h/2} Z`;
+  if(hA>0){pieces.push(`<path class="flow" fill="${s.c.color}" d="${curve(sourceMidA,targetMidA,hA)}"><title>${esc(s.c.name)} → ${esc(D.winner.name)}: ${fmt(s.c.flowWinner)} (${pct(s.c.toWinner)})</title></path>`);winStart+=hA;}
+  if(hB>0){pieces.push(`<path class="flow" fill="${s.c.color}" d="${curve(sourceMidB,otherStart+hB/2,hB)}"><title>${esc(s.c.name)} → ${esc(D.other.name)}: ${fmt(s.c.flowOther)} (${pct(s.c.toOther)})</title></path>`);otherStart+=hB;}
+ }
+ const sourceNodes=sources.map(s=>{const mid=s.y+s.h/2;return `<rect class="source-node" x="${sourceX}" y="${s.y}" width="${sourceW}" height="${s.h}" rx="4" fill="${s.c.color}"><title>${esc(s.c.name)}: ${fmt(s.c.votes)} first-round votes</title></rect><text class="node-label" x="${sourceX+26}" y="${mid-4}">${esc(s.c.name)}</text><text class="node-meta" x="${sourceX+26}" y="${mid+13}">${fmt(s.c.votes)} · ${pct(s.c.toWinner)} → ${esc(D.winner.name)}</text>`}).join("");
+ const wShare=D.secondRound.candidates.find(c=>c.id===D.winner.id).share/100,oShare=D.secondRound.candidates.find(c=>c.id===D.other.id).share/100;
+ const targetNodes=`<rect class="target-node" x="${targetX}" y="${top}" width="${targetW}" height="${winH}" rx="5" fill="#155d53"><title>${esc(D.winner.name)}: estimated contribution from eliminated groups ${fmt(sumWinner)}</title></rect>
+ <text class="target-label" x="${targetX+30}" y="${top+winH/2-5}">${esc(D.winner.name)}</text><text class="node-meta" x="${targetX+30}" y="${top+winH/2+13}">${fmt(sumWinner)} ${TEXT[lang].estimate} · ${pct(wShare)} ${TEXT[lang].official}</text>
+ <rect class="target-node" x="${targetX}" y="${top+winH}" width="${targetW}" height="${otherH}" rx="5" fill="#394b66"><title>${esc(D.other.name)}: estimated contribution from eliminated groups ${fmt(sumOther)}</title></rect>
+ <text class="target-label" x="${targetX+30}" y="${top+winH+otherH/2-5}">${esc(D.other.name)}</text><text class="node-meta" x="${targetX+30}" y="${top+winH+otherH/2+13}">${fmt(sumOther)} ${TEXT[lang].estimate} · ${pct(oShare)} ${TEXT[lang].official}</text>`;
+ svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.setAttribute("height",H);
+ svg.innerHTML=`<text class="node-meta" x="${sourceX}" y="14">${lang==="es"?"VOTOS VÁLIDOS · 1.ª VUELTA":lang==="de"?"GÜLTIGE STIMMEN · 1. WAHLGANG":"VALID VOTES · ROUND 1"}</text><text class="node-meta" x="${targetX}" y="14">${lang==="es"?"DESTINO MODELADO":lang==="de"?"MODELLIERTES ZIEL":"MODELED DESTINATION"}</text>${pieces.join("")}${sourceNodes}${targetNodes}`;
+ document.getElementById("graphDesc").textContent=TEXT[lang].graphDescription;
+}
+function drawScaleGraph(lang){
+ const svg=document.getElementById("scaleFlowGraph"),t=TEXT[lang];
+ const candidates=D.scaleCandidates.map(c=>{
+  const toWinner=Math.min(c.votes,Math.max(0,Math.round(c.votes*scenarioShares.get(c.id))));
+  return {...c,toWinner:scenarioShares.get(c.id),flowWinner:toWinner,flowOther:c.votes-toWinner};
+ }).sort((a,b)=>b.votes-a.votes);
+ const netToWinner=Math.min(D.netValidIncrease,Math.max(0,Math.round(D.netValidIncrease*scenarioShares.get("net-increase"))));
+ const additional={
+  id:"net-increase",name:t.scaleIncrease,votes:D.netValidIncrease,
+  toWinner:scenarioShares.get("net-increase"),flowWinner:netToWinner,
+  flowOther:D.netValidIncrease-netToWinner,color:"#c59b36"
+ };
+ const sources=[...candidates,additional],W=1060,top=28,gap=5,scale=0.0000055;
+ const H=Math.ceil(2*top+D.secondRound.validVotes*scale+gap*(sources.length-1));
+ const sourceX=320,sourceW=14,targetX=735,targetW=18,startX=sourceX+sourceW,endX=targetX;
+ const scenarioWinner=sources.reduce((sum,item)=>sum+item.flowWinner,0);
+ const scenarioOther=sources.reduce((sum,item)=>sum+item.flowOther,0);
+ let sourceY=top, winnerY=top, otherY=top+scenarioWinner*scale;
+ const pieces=[],sourceNodes=[];
+ const curve=(y1,y2,h)=>`M ${startX} ${y1-h/2} C ${startX+120} ${y1-h/2}, ${endX-120} ${y2-h/2}, ${endX} ${y2-h/2} L ${endX} ${y2+h/2} C ${endX-120} ${y2+h/2}, ${startX+120} ${y1+h/2}, ${startX} ${y1+h/2} Z`;
+ for(const item of sources){
+  const winnerHeight=item.flowWinner*scale,otherHeight=item.flowOther*scale,totalHeight=item.votes*scale;
+  const sourceMidWinner=sourceY+winnerHeight/2,sourceMidOther=sourceY+winnerHeight+otherHeight/2;
+  if(winnerHeight>0){
+   const targetMid=winnerY+winnerHeight/2;
+   pieces.push(`<path class="flow" fill="${item.color}" d="${curve(sourceMidWinner,targetMid,winnerHeight)}"><title>${esc(item.name)} → ${esc(D.winner.name)}: ${fmt(item.flowWinner)} (${scenarioPercent(item.toWinner)})</title></path>`);
+   winnerY+=winnerHeight;
+  }
+  if(otherHeight>0){
+   const targetMid=otherY+otherHeight/2;
+   pieces.push(`<path class="flow" fill="${item.color}" d="${curve(sourceMidOther,targetMid,otherHeight)}"><title>${esc(item.name)} → ${esc(D.other.name)}: ${fmt(item.flowOther)} (${scenarioPercent(1-item.toWinner)})</title></path>`);
+   otherY+=otherHeight;
+  }
+  sourceNodes.push(`<rect class="source-node" x="${sourceX}" y="${sourceY}" width="${sourceW}" height="${totalHeight}" rx="3" fill="${item.color}"><title>${esc(item.name)}: ${fmt(item.votes)} ${t.modeledGroup}</title></rect>`);
+  if(totalHeight>=42){
+   const mid=sourceY+totalHeight/2;
+   const label=item.name.length>27?`${item.name.slice(0,26)}…`:item.name;
+   sourceNodes.push(`<text class="node-label" x="${sourceX-12}" y="${mid-4}" text-anchor="end">${esc(label)}</text><text class="node-meta" x="${sourceX-12}" y="${mid+13}" text-anchor="end">${fmt(item.votes)}</text>`);
+  }
+  sourceY+=totalHeight+gap;
+ }
+ const winnerResult=D.secondRound.candidates.find(c=>c.id===D.winner.id);
+ const otherResult=D.secondRound.candidates.find(c=>c.id===D.other.id);
+ const winnerHeight=scenarioWinner*scale,otherHeight=scenarioOther*scale;
+ const targets=`<rect class="target-node" x="${targetX}" y="${top}" width="${targetW}" height="${winnerHeight}" rx="5" fill="#155d53"><title>${esc(D.winner.name)}: ${fmt(scenarioWinner)} · ${t.official}: ${fmt(winnerResult.votes)}</title></rect>
+ <text class="target-label" x="${targetX+30}" y="${top+winnerHeight/2-5}">${esc(D.winner.name)}</text><text class="node-meta" x="${targetX+30}" y="${top+winnerHeight/2+13}">${fmt(scenarioWinner)} · ${pct(scenarioWinner/D.secondRound.validVotes)} · ${t.official}: ${fmt(winnerResult.votes)}</text>
+ <rect class="target-node" x="${targetX}" y="${top+winnerHeight}" width="${targetW}" height="${otherHeight}" rx="5" fill="#394b66"><title>${esc(D.other.name)}: ${fmt(scenarioOther)} · ${t.official}: ${fmt(otherResult.votes)}</title></rect>
+ <text class="target-label" x="${targetX+30}" y="${top+winnerHeight+otherHeight/2-5}">${esc(D.other.name)}</text><text class="node-meta" x="${targetX+30}" y="${top+winnerHeight+otherHeight/2+13}">${fmt(scenarioOther)} · ${pct(scenarioOther/D.secondRound.validVotes)} · ${t.official}: ${fmt(otherResult.votes)}</text>`;
+ const sourceHeading=lang==="es"?"VOTOS VÁLIDOS · PRIMERA VUELTA":lang==="de"?"GÜLTIGE STIMMEN · ERSTER WAHLGANG":"VALID VOTES · FIRST ROUND";
+ svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+ svg.setAttribute("height",H);
+ svg.innerHTML=`<text class="node-meta" x="20" y="14">${sourceHeading}</text><text class="node-meta" x="${targetX}" y="14">${t.scaleSecond.toLocaleUpperCase()}</text>${pieces.join("")}${sourceNodes.join("")}${targets}`;
+ document.getElementById("scaleGraphDesc").textContent=t.scaleGraphDescription;
+ const delta=value=>`${value>0?"+":""}${fmt(value)}`;
+ document.getElementById("scaleSummary").innerHTML=[
+  [`${t.scenarioWinnerResult} ${esc(D.winner.name)}`,`${fmt(scenarioWinner)} · ${pct(scenarioWinner/D.secondRound.validVotes)}`],
+  [`${t.scenarioOtherResult} ${esc(D.other.name)}`,`${fmt(scenarioOther)} · ${pct(scenarioOther/D.secondRound.validVotes)}`],
+  [`${t.scenarioWinnerDifference} ${esc(D.winner.name)}`,delta(scenarioWinner-winnerResult.votes)],
+  [`${t.scenarioOtherDifference} ${esc(D.other.name)}`,delta(scenarioOther-otherResult.votes)]
+ ].map(c=>`<div class="modelbox"><strong>${c[1]}</strong><small>${c[0]}</small></div>`).join("");
+}
+document.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",()=>render(b.dataset.lang)));
+render("es");
+</script>
+</body></html>
