@@ -4,6 +4,10 @@ Mudanças relevantes para quem usa o projeto. Datas no fuso de Brasília.
 
 ## [Não lançado]
 
+### Adicionado
+- `apuracao watch -s replay --speed 1 [--offset MIN] [--reset-sim]`: refaz a noite gravada no ritmo original (`--speed 1`) ou acelerada, pelo painel ou `--plain`, em `data/replay`. Um relógio virtual começa no primeiro resultado do BR com totalização e solta cada rodada gravada no `captured_at` original; o que veio antes (zerado) entra de uma vez. Em seguida, consulte com `-s replay --cached`.
+- `apuracao replay [--from tse] [--to replay] [--reset]`: o mesmo reprocessamento de uma vez, sem rede. Reaplica cada versão publicada nos horários originais, descarta as que retrocedem a totalização (como o `watch`) e recalcula projeção e eventos. O EA14 não é gravado, então o acompanhamento é reconstruído dos resultados; o aviso `sem_atualizacao` não é reproduzido.
+
 ### Corrigido
 - Horários do painel e dos registros (`checado`, `capturado_em`, carimbo dos eventos) agora usam horário de Brasília, o mesmo relógio do TSE, em qualquer fuso da máquina. Registros gravados antes desta mudança guardam a hora local da máquina em `captured_at`.
 - O aviso "Sem atualização do TSE" leva a hora em que disparou (antes mostrava a do último dado) e não se repete ao reabrir o `watch` para o mesmo dado parado.

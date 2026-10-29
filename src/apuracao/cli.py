@@ -60,6 +60,7 @@ class SourceName(str, Enum):
     tse = "tse"
     sim = "sim"
     t1 = "t1"
+    replay = "replay"
 
 
 class Sort(str, Enum):
@@ -70,12 +71,14 @@ class Sort(str, Enum):
     regiao = "regiao"
 
 
-SourceOpt = Annotated[SourceName, typer.Option("--source", "-s", help="tse (ao vivo), sim (simulação), t1 (1º turno real)")]
+SourceOpt = Annotated[SourceName, typer.Option("--source", "-s", help="tse (ao vivo), sim (simulação), t1 (1º turno real), replay (noite refeita; só leitura)")]
 JsonOpt = Annotated[bool, typer.Option("--json", help="Só JSON em stdout (para agentes)")]
 
 
 def _tracker(source: SourceName, *, notify: bool = False, fresh_sim: bool = False, speed: float = 20.0,
              seed: int | None = None, offset: float = 0.0, cached: bool = False) -> Tracker:
+    if source is SourceName.replay and not cached:
+        raise typer.BadParameter("replay só se acompanha com `watch -s replay`; para consultar o histórico use --cached")
     baseline = load_baseline(DATA_DIR, download=not cached)
     root = DATA_DIR / source.value
     if cached:
@@ -109,6 +112,29 @@ def _tracker(source: SourceName, *, notify: bool = False, fresh_sim: bool = Fals
         raise
 
 
+def _replay_tracker(*, notify: bool, reset: bool, speed: float, offset: float) -> Tracker:
+    """`watch -s replay`: refaz a noite gravada em `tse` no ritmo dela (speed 1) ou acelerada, em `replay`."""
+    from .replay import ReplayTracker
+
+    baseline = load_baseline(DATA_DIR, download=False)
+    if baseline is None:
+        raise typer.BadParameter("base do 1º turno ausente; execute apuracao baseline antes")
+    root = DATA_DIR / SourceName.replay.value
+    if any((root / "raw").glob("*/*.json")) and not reset:
+        raise typer.BadParameter("Já existe um replay; consulte com --cached ou use --reset-sim para refazê-lo")
+    if reset and root.exists():
+        shutil.rmtree(root)
+    store = Store(root)
+    try:
+        store.save_baseline(baseline)
+        return ReplayTracker(DATA_DIR / SourceName.tse.value, store, baseline, speed=speed, offset=offset,
+                             notify_events=notify, polls=PollBook(DATA_DIR / "pesquisas.json", fallback=BUNDLED_POLLS))
+    except Exception:
+        store.close()
+        raise
+
+
+
 def _since(store: Store, since: str | None) -> str | None:
     """Aceita 'HH:MM' (dia da última totalização gravada) ou ISO completo."""
     if since and len(since) <= 5:
@@ -119,6 +145,33 @@ def _since(store: Store, since: str | None) -> str | None:
 
 def _print_json(data) -> None:
     sys.stdout.write(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+
+
+@app.command()
+@_errors
+def replay(
+    origem: Annotated[str, typer.Option("--from", help="Pasta de dados a reprocessar (padrão: tse)")] = "tse",
+    destino: Annotated[str, typer.Option("--to", help="Pasta de dados do resultado (padrão: replay)")] = "replay",
+    reset: Annotated[bool, typer.Option("--reset", help="Apaga o destino anterior antes de refazer")] = False,
+) -> None:
+    """Refaz a noite gravada com o modelo atual (sem rede); `-s replay --cached` consulta o destino padrão."""
+    from .replay import replay as run_replay
+    from .replay import resolve_paths
+
+    try:
+        source_root, target = resolve_paths(DATA_DIR, origem, destino)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    if not (source_root / "apuracao.db").exists():
+        raise typer.BadParameter(f"sem histórico em {source_root}")
+    baseline = load_baseline(DATA_DIR, download=False)
+    if baseline is None:
+        raise typer.BadParameter("base do 1º turno ausente; execute apuracao baseline antes")
+    if reset and target.exists():
+        shutil.rmtree(target)
+    stats = run_replay(source_root, target, baseline)
+    console.print(f"{stats.rodadas} rodadas, {stats.versoes} versões ({stats.ignoradas} descartadas por retroceder), "
+                  f"{stats.projecoes} projeções, {stats.eventos} eventos gravados em {target}")
 
 
 @app.command()
@@ -141,7 +194,10 @@ def watch(
         raise typer.BadParameter("intervalo deve ser finito")
     if not math.isfinite(speed) or speed <= 0 or not math.isfinite(offset):
         raise typer.BadParameter("speed deve ser positivo e offset deve ser finito")
-    tracker = _tracker(source, notify=notify, fresh_sim=reset_sim, speed=speed, seed=seed, offset=offset)
+    if source is SourceName.replay:
+        tracker = _replay_tracker(notify=notify, reset=reset_sim, speed=speed, offset=offset)
+    else:
+        tracker = _tracker(source, notify=notify, fresh_sim=reset_sim, speed=speed, seed=seed, offset=offset)
     try:
         if plain:
             _watch_plain(tracker, interval, sort.value)

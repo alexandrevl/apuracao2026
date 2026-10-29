@@ -26,6 +26,8 @@ Comando: `apuracao` (via `uv tool install -e .`; dentro do checkout também func
 | `apuracao grafico` | Gráficos da noite no terminal (timeline, termômetro, chance, vantagem, swing, régua das pesquisas); lê o histórico local |
 | `apuracao watch [--plain] [--interval 5]` | Ao vivo (humano). `--plain` com stdout redirecionado gera log de 1 linha por mudança |
 | `apuracao watch -s sim --speed 60` | Ensaio com noite simulada |
+| `apuracao watch -s replay --speed 1 [--offset MIN]` | Refaz a noite gravada (fonte `tse`) no ritmo original (1) ou acelerada, em `data/replay`; `--reset-sim` apaga o replay anterior |
+| `apuracao replay [--from tse] [--to replay] [--reset]` | Mesmo reprocessamento de uma vez, sem rede; consulte com `-s replay --cached` (destino padrão). Origem e destino são pastas dentro de `data/`; `tse`, `t1`, `sim`, `baseline`, `templates` e `backup*` nunca são destino |
 
 `--since` aceita `HH:MM` (hora de totalização do TSE, no dia da última totalização gravada) ou ISO completo.
 
