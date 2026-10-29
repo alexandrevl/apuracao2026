@@ -8,6 +8,9 @@ Mudanças relevantes para quem usa o projeto. Datas no fuso de Brasília.
 - `apuracao watch -s replay --speed 1 [--offset MIN] [--reset-sim]`: refaz a noite gravada no ritmo original (`--speed 1`) ou acelerada, pelo painel ou `--plain`, em `data/replay`. Um relógio virtual começa no primeiro resultado do BR com totalização e solta cada rodada gravada no `captured_at` original; o que veio antes (zerado) entra de uma vez. Em seguida, consulte com `-s replay --cached`.
 - `apuracao replay [--from tse] [--to replay] [--reset]`: o mesmo reprocessamento de uma vez, sem rede. Reaplica cada versão publicada nos horários originais, descarta as que retrocedem a totalização (como o `watch`) e recalcula projeção e eventos. O EA14 não é gravado, então o acompanhamento é reconstruído dos resultados; o aviso `sem_atualizacao` não é reproduzido.
 
+### Alterado
+- `K` do encolhimento do swing: 0,05 → 0,005. Na noite de 25/10 refeita com as cidades reconstruídas por seção (de 5% a 99% apurado), o erro médio da projeção do Lula contra o oficial final caiu de 0,56 para 0,49 p.p. com as 80 cidades (0,44 → 0,36 com 600 e 0,40 → 0,29 com 1000); o viés continua negativo (−0,49 com 80). Metade do peso do dado agora vem com 0,5% apurado (antes, 5%). A mesma noite escolheu e avaliou o `K`, e o ganho está em 5%–12% apurado; entre 12% e 25% a curva fica um pouco pior e mais volátil.
+
 ### Corrigido
 - Horários do painel e dos registros (`checado`, `capturado_em`, carimbo dos eventos) agora usam horário de Brasília, o mesmo relógio do TSE, em qualquer fuso da máquina. Registros gravados antes desta mudança guardam a hora local da máquina em `captured_at`.
 - O aviso "Sem atualização do TSE" leva a hora em que disparou (antes mostrava a do último dado) e não se repete ao reabrir o `watch` para o mesmo dado parado.

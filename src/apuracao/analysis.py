@@ -30,11 +30,15 @@ from .parse import Counts, Progress, Result
 from .sources import CIDADE_UF, REGIONS, UF_REGION
 from .store import PacePoint
 
-# Peso prévio no encolhimento do swing: r = apurado / (apurado + K·(1 − apurado)); com 5% apurado
-# o dado observado vale metade. Calibrado em 25/10/2026 (por UF, centro 0): prever, a cada versão, o
-# swing dos votos que entraram depois em cada UF. Centro 0 com K=0,05: RMSE 2,3 p.p., viés −0,1;
-# centro regional/nacional (K=0,10): 2,7 p.p., viés +0,6; modelo original: 4,2 p.p., viés +3,2.
-SWING_SHRINK_K = 0.05
+# Peso prévio no encolhimento do swing: r = apurado / (apurado + K·(1 − apurado)); com 0,5% apurado o
+# dado observado vale metade (91% com 5%, 98% com 20%). K = 0,005 deu o menor erro médio da projeção do
+# Lula contra o oficial final (de 5% a 99% apurado) na noite de 25/10/2026 refeita com as cidades
+# reconstruídas por seção: 0,49 p.p. com 80 cidades (0,56 com K=0,05), 0,36 com 600 e 0,29 com 1000
+# (0,44 e 0,40 com K=0,05). Mesma noite para escolher e avaliar; o ganho vem de 5% a 12% apurado, e entre
+# 12% e 25% a curva fica um pouco pior e mais volátil. O K=0,05 anterior vinha de outro critério (prever
+# o swing dos votos que entraram depois, por UF): centro 0, RMSE 2,3 p.p., viés −0,1; centro
+# regional/nacional (K=0,10): 2,7 p.p., viés +0,6; modelo original: 4,2 p.p., viés +3,2.
+SWING_SHRINK_K = 0.005
 SIGMA_COMMON = 0.015
 SIGMA_REGION = 0.01
 SIGMA_UNIT = 0.025

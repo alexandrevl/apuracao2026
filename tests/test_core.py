@@ -100,7 +100,6 @@ def test_early_swing_is_shrunk_and_converges_to_observed_at_full_count():
         _, br = make_result("br", 600 * 27, 400 * 27, frac)
         swings.append(project(br, ufs, None, baseline(0.5)).swing_pp)
     assert 0 < swings[0] < swings[1] < swings[2]
-    assert swings[0] < 6  # com 5% apurado o swing observado vale ~metade
     assert swings[2] == pytest.approx(10.0)
 
 
